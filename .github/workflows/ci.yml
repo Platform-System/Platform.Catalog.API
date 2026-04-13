@@ -1,4 +1,4 @@
-﻿name: Catalog Service CI
+name: Catalog Service CI
 
 on:
   push:
@@ -6,6 +6,6 @@ on:
 
 jobs:
   build:
-    uses: Khanh-Hung/Platform.CI-CD/.github/workflows/dotnet-build-template.yml@main
+    uses: Platform-System/Platform.CI-CD/.github/workflows/dotnet-build-template.yml@main
     with:
       project_path: 'Platform.Catalog.sln'
