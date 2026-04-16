@@ -51,5 +51,16 @@ namespace Platform.Catalog.API.Domain.Entities
             if (product == null) return;
             _products.Remove(product);
         }
+
+        public static ProductType Load(Guid id, string name)
+        {
+            var productType = new ProductType
+            {
+                Id = id,
+                Name = name
+            };
+
+            return productType;
+        }
     }
 }

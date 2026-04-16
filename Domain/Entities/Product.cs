@@ -14,32 +14,94 @@ namespace Platform.Catalog.API.Domain.Entities
         public string? CoverImageUrl { get; protected set; }
         public string Author { get; protected set; } = null!;
         public long Price { get; protected set; }
-        public Guid ProductTypeId { get; protected set; }
         public ProductStatus Status { get; protected set; }
         public DateTime? PublishedAt { get; protected set; }
-        public JsonDocument? AdditionalInfo { get; private set; }
-        public ProductType ProductType { get; protected set; } = null!;
+        public JsonDocument? AdditionalInfo { get; protected set; }
+
+        private readonly List<ProductType> _productTypes = new();
+        public IReadOnlyCollection<ProductType> ProductTypes => _productTypes.AsReadOnly();
+
         private readonly List<ProductMedia> _mediaFiles = new();
         public IReadOnlyCollection<ProductMedia> MediaFiles => _mediaFiles.AsReadOnly();
-        
+
         protected Product() { }
 
-        protected Product(string title, string blobName, string containerName, string author, long price, ProductType productType)
+        protected DomainResult Initialize(string title, string blobName, string containerName, string author, long price, IEnumerable<ProductType> productTypes)
         {
-            SetProductType(productType);
-            SetInfo(title, blobName, containerName, author, price);
-        }
-
-        public DomainResult UpdateInfo(string title, string blobName, string containerName, string author, long price, ProductType newType)
-        {
-            if (newType == null)
+            var productTypesList = productTypes?.ToList() ?? [];
+            if (productTypesList.Count == 0)
                 return DomainResult.Failure(ProductErrors.InvalidType);
 
-            ChangeProductType(newType);
-            return SetInfo(title, blobName, containerName, author, price);
+            var infoResult = SetInfo(title, blobName, containerName, author, price);
+            if (infoResult.IsFailure)
+                return infoResult;
+
+            foreach (var type in productTypesList)
+            {
+                AddProductType(type);
+            }
+
+            return DomainResult.Success();
+        }
+
+        public DomainResult UpdateInfo(string title, string blobName, string containerName, string author, long price, List<ProductType> newTypes)
+        {
+            if (newTypes == null || !newTypes.Any())
+                return DomainResult.Failure(ProductErrors.InvalidType);
+
+            var validationResult = ValidateInfo(title, blobName, containerName, author, price);
+            if (validationResult.IsFailure)
+                return validationResult;
+
+            var currentBlob = GetBlob();
+
+            Title = title.Trim();
+            Author = author.Trim();
+            Price = price;
+
+            if (ShouldReplaceBlob(currentBlob, blobName, containerName))
+            {
+                SetBlob(new BlobMetadata
+                {
+                    BlobName = blobName,
+                    ContainerName = containerName,
+                    UploadedAt = Clock.Now
+                });
+            }
+
+            var currentTypes = _productTypes.ToList();
+            foreach (var type in currentTypes) RemoveProductType(type);
+            foreach (var type in newTypes) AddProductType(type);
+
+            return DomainResult.Success();
         }
 
         protected DomainResult SetInfo(string title, string blobName, string containerName, string author, long price)
+        {
+            var validationResult = ValidateInfo(title, blobName, containerName, author, price);
+            if (validationResult.IsFailure)
+                return validationResult;
+
+            var currentBlob = GetBlob();
+
+            Title = title.Trim();
+            Author = author.Trim();
+            Price = price;
+
+            if (ShouldReplaceBlob(currentBlob, blobName, containerName))
+            {
+                SetBlob(new BlobMetadata
+                {
+                    BlobName = blobName,
+                    ContainerName = containerName,
+                    UploadedAt = Clock.Now
+                });
+            }
+
+            return DomainResult.Success();
+        }
+
+        private static DomainResult ValidateInfo(string title, string blobName, string containerName, string author, long price)
         {
             if (string.IsNullOrWhiteSpace(title)) return DomainResult.Failure(DomainErrors.Validation.Required(nameof(Title)));
             if (string.IsNullOrWhiteSpace(blobName)) return DomainResult.Failure(DomainErrors.Validation.Required("BlobName"));
@@ -47,102 +109,150 @@ namespace Platform.Catalog.API.Domain.Entities
             if (string.IsNullOrWhiteSpace(author)) return DomainResult.Failure(DomainErrors.Validation.Required(nameof(Author)));
             if (price < 0) return DomainResult.Failure(ProductErrors.InvalidPrice);
 
-            Title = title.Trim();
-            SetBlob(new BlobMetadata
-            {
-                BlobName = blobName,
-                ContainerName = containerName,
-                UploadedAt = Clock.Now
-            });
-            Author = author.Trim();
-            Price = price;
-
             return DomainResult.Success();
         }
 
-        public void SetBlob(BlobMetadata blob)
+        private static bool ShouldReplaceBlob(BlobMetadata? currentBlob, string blobName, string containerName)
         {
-            AdditionalInfo = AdditionalInfo.Set(AdditionalInfoExtensions.BlobKey, blob);
+            return currentBlob == null
+                || !string.Equals(currentBlob.BlobName, blobName, StringComparison.Ordinal)
+                || !string.Equals(currentBlob.ContainerName, containerName, StringComparison.Ordinal);
         }
-        
-        public BlobMetadata? GetBlob()
+
+        public void AddProductType(ProductType productType)
         {
-            return AdditionalInfo.Get<BlobMetadata>(AdditionalInfoExtensions.BlobKey);
+            if (productType == null) return;
+            if (_productTypes.Any(x => x.Id == productType.Id)) return;
+
+            _productTypes.Add(productType);
+            productType.AddProduct(this);
         }
+
+        public void RemoveProductType(ProductType productType)
+        {
+            var existing = _productTypes.FirstOrDefault(x => x.Id == productType.Id);
+            if (existing == null) return;
+
+            _productTypes.Remove(existing);
+            existing.RemoveProduct(this);
+        }
+
+        public string GetProductTypeNames() => string.Join(", ", _productTypes.Select(x => x.Name));
+
+        public void SetBlob(BlobMetadata blob) => AdditionalInfo = AdditionalInfo.Set(AdditionalInfoExtensions.BlobKey, blob);
+        public BlobMetadata? GetBlob() => AdditionalInfo.Get<BlobMetadata>(AdditionalInfoExtensions.BlobKey);
 
         public DomainResult PublishBlob(string publicUrl)
         {
-            if (string.IsNullOrWhiteSpace(publicUrl)) 
-                return DomainResult.Failure(DomainErrors.Validation.Required("PublicUrl"));
-
+            if (string.IsNullOrWhiteSpace(publicUrl)) return DomainResult.Failure(DomainErrors.Validation.Required("PublicUrl"));
             var blob = GetBlob();
-            if (blob == null) 
-                return DomainResult.Failure(DomainErrors.Global.NotFound("Blob", Id));
+            if (blob == null) return DomainResult.Failure(DomainErrors.Global.NotFound("Blob", Id));
 
             blob.Status = BlobStatus.Public;
             SetBlob(blob);
             CoverImageUrl = publicUrl;
-
             return DomainResult.Success();
         }
 
-        public void ChangeProductType(ProductType newType)
-        {
-            if (newType == null) return;
-            if (ProductTypeId == newType.Id) return;
-
-            ProductType?.RemoveProduct(this);
-            newType.AddProduct(this);
-
-            ProductType = newType;
-            ProductTypeId = newType.Id;
-        }
-
-        protected void SetProductType(ProductType productType)
-        {
-            if (productType == null) return;
-
-            ProductType = productType;
-            ProductTypeId = productType.Id;
-            productType.AddProduct(this);
-        }
-
-        public string GetProductTypeName() => ProductType?.Name ?? "No Type";
-
         public DomainResult Activate()
         {
-            if (Status == ProductStatus.Deleted) 
-                return DomainResult.Failure(ProductErrors.AlreadyDeleted);
-            
+            if (Status == ProductStatus.Deleted) return DomainResult.Failure(ProductErrors.AlreadyDeleted);
             Status = ProductStatus.Active;
-            
-            if (PublishedAt == null)
-            {
-                PublishedAt = Clock.Now;
-            }
-
+            if (PublishedAt == null) PublishedAt = Clock.Now;
             return DomainResult.Success();
         }
 
         public DomainResult Delete()
         {
-            if (Status == ProductStatus.Deleted) 
-                return DomainResult.Success();
+            if (Status == ProductStatus.Deleted) return DomainResult.Success();
 
             Status = ProductStatus.Deleted;
-            ProductType?.RemoveProduct(this);
+
+            var types = _productTypes.ToList();
+            foreach (var type in types)
+            {
+                type.RemoveProduct(this);
+            }
+            _productTypes.Clear();
+
             return DomainResult.Success();
         }
 
         public DomainResult Deactivate()
         {
-            if (Status == ProductStatus.Deleted) 
-                return DomainResult.Failure(ProductErrors.AlreadyDeleted);
-            
+            if (Status == ProductStatus.Deleted) return DomainResult.Failure(ProductErrors.AlreadyDeleted);
             Status = ProductStatus.Inactive;
             return DomainResult.Success();
         }
 
         public void SetDraft() => Status = ProductStatus.Draft;
+
+        protected void LoadState(
+            Guid id,
+            string title,
+            string? coverImageUrl,
+            string author,
+            long price,
+            ProductStatus status,
+            DateTime? publishedAt,
+            BlobMetadata? blobMetadata,
+            DateTime createdAt,
+            string? createdBy,
+            DateTime? updatedAt,
+            string? updatedBy,
+            bool isSoftDeleted,
+            DateTime? deletedAt,
+            string? deletedBy)
+        {
+            Id = id;
+            Title = title;
+            CoverImageUrl = coverImageUrl;
+            Author = author;
+            Price = price;
+            Status = status;
+            PublishedAt = publishedAt;
+            AdditionalInfo = null;
+
+            if (blobMetadata is not null)
+            {
+                SetBlob(blobMetadata);
+            }
+
+            SetCreated(createdAt, createdBy);
+
+            if (updatedAt.HasValue)
+            {
+                SetUpdated(updatedAt.Value, updatedBy);
+            }
+
+            if (isSoftDeleted && deletedAt.HasValue)
+            {
+                SetDeleted(deletedAt.Value, deletedBy);
+            }
+        }
+
+        public void LoadProductTypes(IEnumerable<ProductType> productTypes)
+        {
+            _productTypes.Clear();
+
+            foreach (var productType in productTypes)
+            {
+                AddProductType(productType);
+            }
+        }
+
+        public void LoadMediaFiles(IEnumerable<ProductMedia> mediaFiles)
+        {
+            _mediaFiles.Clear();
+
+            foreach (var media in mediaFiles)
+            {
+                if (_mediaFiles.Any(x => x.Id == media.Id))
+                    continue;
+
+                media.AttachProduct(this);
+                _mediaFiles.Add(media);
+            }
+        }
     }
 }

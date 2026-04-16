@@ -28,5 +28,19 @@ namespace Platform.Catalog.API.Domain.Entities
             SortOrder = sortOrder;
             AltText = altText;
         }
+
+        public static ProductMedia Load(Guid id, string fileName, string url, string contentType, long size, MediaType type, Guid productId, int sortOrder, string? altText)
+        {
+            return new ProductMedia(fileName, url, contentType, size, type, productId, sortOrder, altText)
+            {
+                Id = id
+            };
+        }
+
+        public void AttachProduct(Product product)
+        {
+            Product = product;
+            ProductId = product.Id;
+        }
     }
 }
