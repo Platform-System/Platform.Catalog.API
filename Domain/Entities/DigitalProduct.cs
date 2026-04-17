@@ -9,13 +9,14 @@ namespace Platform.Catalog.API.Domain.Entities
     {
         private DigitalProduct() { }
 
-        public static DomainResult<DigitalProduct> Create(string title, string blobName, string containerName, string author, long price, ProductType productType)
+        public static DomainResult<DigitalProduct> Create(string title, string blobName, string containerName, string author, long price, IEnumerable<ProductType> productTypes)
         {
-            if (productType is null)
+            var productTypesList = productTypes?.ToList() ?? [];
+            if (productTypesList.Count == 0)
                 return DomainResult<DigitalProduct>.Failure(ProductErrors.InvalidType);
 
             var product = new DigitalProduct();
-            var initializeResult = product.Initialize(title, blobName, containerName, author, price, [productType]);
+            var initializeResult = product.Initialize(title, blobName, containerName, author, price, productTypesList);
             if (initializeResult.IsFailure)
                 return DomainResult<DigitalProduct>.Failure(initializeResult.Error);
 

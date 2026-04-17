@@ -7,6 +7,53 @@ namespace Platform.Catalog.API.Application.Mappers;
 
 public static class PersistenceMapper
 {
+    public static ProductModel ToPersistence(this Product product, IEnumerable<ProductTypeModel> productTypes)
+    {
+        ProductModel model = product switch
+        {
+            PhysicalProduct physical => new PhysicalProductModel(product.Id, physical.Stock),
+            DigitalProduct => new DigitalProductModel(product.Id),
+            _ => throw new InvalidOperationException($"Unsupported product domain type: {product.GetType().Name}")
+        };
+
+        model.Title = product.Title;
+        model.CoverImageUrl = product.CoverImageUrl;
+        model.Author = product.Author;
+        model.Price = product.Price;
+        model.Status = product.Status;
+        model.PublishedAt = product.PublishedAt;
+        model.AdditionalInfo = product.AdditionalInfo;
+        model.ProductTypes = productTypes.ToList();
+
+        return model;
+    }
+
+    public static void ApplyDomainState(this ProductModel model, Product product, IEnumerable<ProductTypeModel>? productTypes = null)
+    {
+        model.Title = product.Title;
+        model.CoverImageUrl = product.CoverImageUrl;
+        model.Author = product.Author;
+        model.Price = product.Price;
+        model.Status = product.Status;
+        model.PublishedAt = product.PublishedAt;
+        model.AdditionalInfo = product.AdditionalInfo;
+
+        if (model is PhysicalProductModel physicalModel && product is PhysicalProduct physicalProduct)
+        {
+            physicalModel.Stock = physicalProduct.Stock;
+        }
+
+        if (productTypes is not null)
+        {
+            model.ProductTypes.Clear();
+
+            foreach (var productType in productTypes)
+            {
+                model.ProductTypes.Add(productType);
+            }
+        }
+    }
+
     public static Product ToDomain(this ProductModel model)
     {
         var blobMetadata = model.AdditionalInfo.GetProperty<BlobMetadata>("blob");

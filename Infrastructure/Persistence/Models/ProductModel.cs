@@ -8,6 +8,14 @@ namespace Platform.Catalog.API.Infrastructure.Persistence.Models;
 [Table("Products")]
 public abstract class ProductModel : Entity
 {
+    protected ProductModel()
+    {
+    }
+
+    protected ProductModel(Guid id) : base(id)
+    {
+    }
+
     public string Title { get; set; } = null!;
     public string? CoverImageUrl { get; set; }
     public string Author { get; set; } = null!;

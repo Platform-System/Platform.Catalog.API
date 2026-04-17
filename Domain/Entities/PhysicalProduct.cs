@@ -11,13 +11,14 @@ namespace Platform.Catalog.API.Domain.Entities
 
         private PhysicalProduct() { }
 
-        public static DomainResult<PhysicalProduct> Create(string title, string blobName, string containerName, string author, long price, ProductType productType, int stock)
+        public static DomainResult<PhysicalProduct> Create(string title, string blobName, string containerName, string author, long price, IEnumerable<ProductType> productTypes, int stock)
         {
+            var productTypesList = productTypes?.ToList() ?? [];
             if (stock < 0) return DomainResult<PhysicalProduct>.Failure(ProductErrors.InsufficientStock);
-            if (productType is null) return DomainResult<PhysicalProduct>.Failure(ProductErrors.InvalidType);
+            if (productTypesList.Count == 0) return DomainResult<PhysicalProduct>.Failure(ProductErrors.InvalidType);
 
             var product = new PhysicalProduct();
-            var initializeResult = product.Initialize(title, blobName, containerName, author, price, [productType]);
+            var initializeResult = product.Initialize(title, blobName, containerName, author, price, productTypesList);
             if (initializeResult.IsFailure)
                 return DomainResult<PhysicalProduct>.Failure(initializeResult.Error);
 
