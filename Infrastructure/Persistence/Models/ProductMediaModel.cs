@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-[Table("ProductMedia")]
+[Table("ProductMedias")]
 public sealed class ProductMediaModel : Entity
 {
     public string FileName { get; set; } = null!;

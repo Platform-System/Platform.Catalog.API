@@ -50,6 +50,6 @@ public sealed class DeleteProductHandler : ICommandHandler<DeleteProductCommand,
         productModel.ApplyDomainState(product, []);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
 
-        return Result<ProductResponse>.Success(product.ToResponse());
+        return Result<ProductResponse>.Success(productModel.ToResponse());
     }
 }

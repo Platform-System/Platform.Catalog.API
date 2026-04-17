@@ -3,7 +3,6 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
-using Platform.Catalog.API.Application.Mappers;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -61,7 +60,7 @@ public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, P
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount,
-            Items = items.Select(x => x.ToDomain().ToResponse()).ToList()
+            Items = items.Select(x => x.ToResponse()).ToList()
         };
 
         return Result<PagedResult<ProductResponse>>.Success(result);

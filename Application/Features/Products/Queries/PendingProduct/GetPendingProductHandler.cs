@@ -4,7 +4,6 @@ using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
-using Platform.Catalog.API.Application.Mappers;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -45,16 +44,15 @@ public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQu
 
         foreach (var productModel in productModels)
         {
-            var product = productModel.ToDomain();
-            var blob = product.GetBlob();
             string? coverImageUrl = null;
+            var blob = productModel.GetBlobReference();
 
-            if (blob is not null)
+            if (blob.HasValue)
             {
-                coverImageUrl = _blobService.GenerateReadSasUrl(blob.ContainerName, blob.BlobName);
+                coverImageUrl = _blobService.GenerateReadSasUrl(blob.Value.ContainerName, blob.Value.BlobName);
             }
 
-            items.Add(product.ToResponse(coverImageUrl));
+            items.Add(productModel.ToResponse(coverImageUrl));
         }
 
         var pagedResult = new PagedResult<ProductResponse>

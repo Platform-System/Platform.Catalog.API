@@ -6,7 +6,6 @@ using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Application.Mappers;
-using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -92,12 +91,12 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
         productModel.ApplyDomainState(product, productTypeModels);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
 
-        var blob = product.GetBlob();
-        string? coverImageUrl = product.CoverImageUrl;
+        var blob = productModel.GetBlobReference();
+        string? coverImageUrl = productModel.CoverImageUrl;
 
-        if (blob is not null)
-            coverImageUrl = _blobService.GenerateReadSasUrl(blob.ContainerName, blob.BlobName);
+        if (blob.HasValue)
+            coverImageUrl = _blobService.GenerateReadSasUrl(blob.Value.ContainerName, blob.Value.BlobName);
 
-        return Result<ProductResponse>.Success(product.ToResponse(coverImageUrl));
+        return Result<ProductResponse>.Success(productModel.ToResponse(coverImageUrl));
     }
 }
