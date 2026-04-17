@@ -5,14 +5,12 @@ namespace Platform.Catalog.API.Application.Features.Products.Commands.Create;
 
 public sealed class CreateProductCommand : ICommand<ProductResponse>
 {
-    public string BlobName { get; }
-    public string ContainerName { get; }
     public CreateProductRequest Request { get; }
+    public ProductImageRequest Image { get; }
 
-    public CreateProductCommand(string blobName, string containerName, CreateProductRequest request)
+    public CreateProductCommand(CreateProductRequest request, ProductImageRequest image)
     {
-        BlobName = blobName;
-        ContainerName = containerName;
         Request = request;
+        Image = image;
     }
 }

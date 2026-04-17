@@ -4,7 +4,7 @@ using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
 {
-    public class ProductMediaConfiguration : IEntityTypeConfiguration<ProductMediaModel>
+    public sealed class ProductMediaConfiguration : IEntityTypeConfiguration<ProductMediaModel>
     {
         public void Configure(EntityTypeBuilder<ProductMediaModel> builder)
         {

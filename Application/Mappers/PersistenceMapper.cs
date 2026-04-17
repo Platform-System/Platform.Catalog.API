@@ -103,7 +103,7 @@ public static class PersistenceMapper
     }
 
     public static ProductType ToDomain(this ProductTypeModel model)
-        => ProductType.Load(model.Id, model.Name);
+        => ProductType.Load(model.Id, model.Name, model.Status);
 
     public static ProductMedia ToDomain(this ProductMediaModel model)
         => ProductMedia.Load(model.Id, model.FileName, model.Url, model.ContentType, model.Size, model.Type, model.ProductId, model.SortOrder, model.AltText);

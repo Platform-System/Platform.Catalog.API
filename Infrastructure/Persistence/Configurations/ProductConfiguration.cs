@@ -4,7 +4,7 @@ using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
 {
-    public class ProductConfiguration : IEntityTypeConfiguration<ProductModel>
+    public sealed class ProductConfiguration : IEntityTypeConfiguration<ProductModel>
     {
         public void Configure(EntityTypeBuilder<ProductModel> builder)
         {

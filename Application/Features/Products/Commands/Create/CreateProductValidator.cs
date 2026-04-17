@@ -7,13 +7,21 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProductComm
 {
     public CreateProductValidator()
     {
-        RuleFor(x => x.BlobName)
-            .NotEmpty()
-            .WithMessage("Blob name is required.");
+        RuleFor(x => x.Request.Kind)
+            .IsInEnum()
+            .WithMessage("Product kind is invalid.");
 
-        RuleFor(x => x.ContainerName)
+        RuleFor(x => x.Image.Stream)
+            .NotNull()
+            .WithMessage("Image stream is required.");
+
+        RuleFor(x => x.Image.FileName)
             .NotEmpty()
-            .WithMessage("Container name is required.");
+            .WithMessage("File name is required.");
+
+        RuleFor(x => x.Image.ContentType)
+            .NotEmpty()
+            .WithMessage("Content type is required.");
 
         RuleFor(x => x.Request.Title)
             .NotEmpty()

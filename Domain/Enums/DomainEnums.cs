@@ -14,6 +14,12 @@ namespace Platform.Catalog.API.Domain.Enums
         Deleted
     }
 
+    public enum ProductTypeStatus
+    {
+        Active,
+        Deleted
+    }
+
     public enum MediaType
     {
         Image,

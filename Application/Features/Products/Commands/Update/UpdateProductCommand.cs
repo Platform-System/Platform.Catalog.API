@@ -6,15 +6,13 @@ namespace Platform.Catalog.API.Application.Features.Products.Commands.Update;
 public sealed class UpdateProductCommand : ICommand<ProductResponse>
 {
     public Guid ProductId { get; }
-    public string BlobName { get; }
-    public string ContainerName { get; }
     public UpdateProductRequest Request { get; }
+    public ProductImageRequest Image { get; }
 
-    public UpdateProductCommand(Guid productId, string blobName, string containerName, UpdateProductRequest request)
+    public UpdateProductCommand(Guid productId, UpdateProductRequest request, ProductImageRequest image)
     {
         ProductId = productId;
-        BlobName = blobName;
-        ContainerName = containerName;
         Request = request;
+        Image = image;
     }
 }

@@ -1,6 +1,6 @@
-namespace Platform.Catalog.API.Application.Features.Products.Commands.UploadImage;
+namespace Platform.Catalog.API.Application.Features.Products.Shared;
 
-public sealed class UploadImageRequest
+public sealed class ProductImageRequest
 {
     public required Stream Stream { get; init; }
     public required string FileName { get; init; }

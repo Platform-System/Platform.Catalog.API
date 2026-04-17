@@ -7,10 +7,10 @@ using Platform.Catalog.API.Application.Features.Products.Commands.ApproveProduct
 using Platform.Catalog.API.Application.Features.Products.Commands.Create;
 using Platform.Catalog.API.Application.Features.Products.Commands.Delete;
 using Platform.Catalog.API.Application.Features.Products.Commands.Update;
-using Platform.Catalog.API.Application.Features.Products.Commands.UploadImage;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 using Platform.Catalog.API.Application.Features.Products.Queries.PendingProduct;
 using Platform.Catalog.API.Application.Features.Products.Queries.PendingProductOfUser;
+using Platform.Catalog.API.Application.Features.Products.Shared;
 
 namespace Platform.Catalog.API.Presentation;
 
@@ -74,21 +74,15 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> Create([FromForm] CreateProductRequest request, [FromForm] IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();
-
-        var uploadResult = await _sender.Send(
-            new UploadImageCommand(new UploadImageRequest
-            {
-                Stream = stream,
-                FileName = file.FileName,
-                ContentType = file.ContentType
-            }),
-            cancellationToken);
-
-        if (!uploadResult.IsSuccess)
-            return uploadResult.ToActionResult();
-
         var result = await _sender.Send(
-            new CreateProductCommand(uploadResult.Value.BlobName, uploadResult.Value.ContainerName, request),
+            new CreateProductCommand(
+                request,
+                new ProductImageRequest
+                {
+                    Stream = stream,
+                    FileName = file.FileName,
+                    ContentType = file.ContentType
+                }),
             cancellationToken);
 
         return result.ToActionResult();
@@ -99,21 +93,16 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> Update(Guid productId, [FromForm] UpdateProductRequest request, [FromForm] IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();
-
-        var uploadResult = await _sender.Send(
-            new UploadImageCommand(new UploadImageRequest
-            {
-                Stream = stream,
-                FileName = file.FileName,
-                ContentType = file.ContentType
-            }),
-            cancellationToken);
-
-        if (!uploadResult.IsSuccess)
-            return uploadResult.ToActionResult();
-
         var result = await _sender.Send(
-            new UpdateProductCommand(productId, uploadResult.Value.BlobName, uploadResult.Value.ContainerName, request),
+            new UpdateProductCommand(
+                productId,
+                request,
+                new ProductImageRequest
+                {
+                    Stream = stream,
+                    FileName = file.FileName,
+                    ContentType = file.ContentType
+                }),
             cancellationToken);
 
         return result.ToActionResult();
