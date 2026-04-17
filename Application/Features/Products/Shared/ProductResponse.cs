@@ -1,5 +1,6 @@
-using Platform.Catalog.API.Domain.Entities;
 using Platform.BuildingBlocks.DateTimes;
+using Platform.Catalog.API.Infrastructure.Persistence.Models;
+using System.Text.Json;
 
 namespace Platform.Catalog.API.Application.Features.Products.Shared;
 
@@ -19,7 +20,7 @@ public sealed class ProductResponse
 
 public static class ProductResponseMapper
 {
-    public static ProductResponse ToResponse(this Product product, string? coverImageUrl = null)
+    public static ProductResponse ToResponse(this ProductModel product, string? coverImageUrl = null)
     {
         return new ProductResponse
         {
@@ -28,11 +29,34 @@ public static class ProductResponseMapper
             CoverImageUrl = coverImageUrl ?? product.CoverImageUrl,
             Author = product.Author,
             Price = product.Price,
-            Kind = product is PhysicalProduct ? ProductKind.PhysicalProduct : ProductKind.DigitalProduct,
+            Kind = product is PhysicalProductModel ? ProductKind.PhysicalProduct : ProductKind.DigitalProduct,
             ProductTypeNames = product.ProductTypes.Select(x => x.Name).ToArray(),
-            Stock = product is PhysicalProduct physical ? physical.Stock : null,
+            Stock = product is PhysicalProductModel physical ? physical.Stock : null,
             Status = product.Status.ToString(),
             CreatedAt = product.CreatedAt == default ? Clock.Now : product.CreatedAt
         };
+    }
+
+    public static (string ContainerName, string BlobName)? GetBlobReference(this ProductModel product)
+    {
+        if (product.AdditionalInfo is null)
+            return null;
+
+        if (!product.AdditionalInfo.RootElement.TryGetProperty("blob", out JsonElement blobElement))
+            return null;
+
+        if (!blobElement.TryGetProperty("ContainerName", out JsonElement containerElement))
+            return null;
+
+        if (!blobElement.TryGetProperty("BlobName", out JsonElement blobNameElement))
+            return null;
+
+        var containerName = containerElement.GetString();
+        var blobName = blobNameElement.GetString();
+
+        if (string.IsNullOrWhiteSpace(containerName) || string.IsNullOrWhiteSpace(blobName))
+            return null;
+
+        return (containerName, blobName);
     }
 }
