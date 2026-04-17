@@ -6,6 +6,7 @@ using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Application.Mappers;
+using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -50,7 +51,7 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
         var productTypeModels = await _unitOfWork
             .GetRepository<ProductTypeModel>()
             .GetQueryable()
-            .Where(x => requestedTypeIds.Contains(x.Id))
+            .Where(x => requestedTypeIds.Contains(x.Id) && x.Status == ProductTypeStatus.Active)
             .ToListAsync(cancellationToken);
 
         if (productTypeModels.Count != requestedTypeIds.Count)
@@ -59,16 +60,12 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
         var product = productModel.ToDomain();
         var productTypes = productTypeModels.Select(x => x.ToDomain()).ToList();
 
-        var updateInfoResult = product.UpdateInfo(
-            command.Request.Title,
-            command.BlobName,
-            command.ContainerName,
-            command.Request.Author,
-            command.Request.Price,
-            productTypes);
+        var currentKind = productModel is PhysicalProductModel
+            ? ProductKind.PhysicalProduct
+            : ProductKind.DigitalProduct;
 
-        if (updateInfoResult.IsFailure)
-            return Result<ProductResponse>.Failure("Unable to update product information.");
+        if (command.Request.Kind != currentKind)
+            return Result<ProductResponse>.Failure("Product kind cannot be changed.");
 
         if (product is PhysicalProduct physicalProduct)
         {
@@ -87,6 +84,26 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
         {
             return Result<ProductResponse>.Failure("Digital product cannot have stock.");
         }
+
+        var uploadResult = await _blobService.UploadAsync(
+            command.Image.Stream,
+            command.Image.FileName,
+            command.Image.ContentType,
+            cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(uploadResult.BlobName) || string.IsNullOrWhiteSpace(uploadResult.ContainerName))
+            return Result<ProductResponse>.Failure("Unable to upload product image.");
+
+        var updateInfoResult = product.UpdateInfo(
+            command.Request.Title,
+            uploadResult.BlobName,
+            uploadResult.ContainerName,
+            command.Request.Author,
+            command.Request.Price,
+            productTypes);
+
+        if (updateInfoResult.IsFailure)
+            return Result<ProductResponse>.Failure("Unable to update product information.");
 
         productModel.ApplyDomainState(product, productTypeModels);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);

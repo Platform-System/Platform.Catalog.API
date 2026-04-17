@@ -1,10 +1,12 @@
 using Platform.Domain.Common;
+using Platform.Catalog.API.Domain.Enums;
 
 namespace Platform.Catalog.API.Domain.Entities
 {
     public class ProductType : AggregateRoot
     {
         public string Name { get; private set; } = null!;
+        public ProductTypeStatus Status { get; private set; }
 
         private readonly List<Product> _products = new();
         public IReadOnlyCollection<Product> Products => _products.AsReadOnly();
@@ -14,6 +16,7 @@ namespace Platform.Catalog.API.Domain.Entities
         public ProductType(string name)
         {
             SetName(name);
+            Status = ProductTypeStatus.Active;
         }
 
         public static DomainResult<ProductType> Create(string name)
@@ -26,7 +29,19 @@ namespace Platform.Catalog.API.Domain.Entities
 
         public DomainResult UpdateName(string name)
         {
+            if (Status != ProductTypeStatus.Active)
+                return DomainResult.Failure(DomainErrors.Global.NotFound(nameof(ProductType), Id));
+
             return SetName(name);
+        }
+
+        public DomainResult Delete()
+        {
+            if (Status == ProductTypeStatus.Deleted)
+                return DomainResult.Success();
+
+            Status = ProductTypeStatus.Deleted;
+            return DomainResult.Success();
         }
 
         private DomainResult SetName(string name)
@@ -52,12 +67,13 @@ namespace Platform.Catalog.API.Domain.Entities
             _products.Remove(product);
         }
 
-        public static ProductType Load(Guid id, string name)
+        public static ProductType Load(Guid id, string name, ProductTypeStatus status)
         {
             var productType = new ProductType
             {
                 Id = id,
-                Name = name
+                Name = name,
+                Status = status
             };
 
             return productType;
