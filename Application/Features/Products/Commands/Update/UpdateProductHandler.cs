@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
-using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
@@ -15,13 +14,11 @@ namespace Platform.Catalog.API.Application.Features.Products.Commands.Update;
 public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand, ProductResponse>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IBlobService _blobService;
     private readonly ICurrentUserProvider _currentUserProvider;
 
-    public UpdateProductHandler(IUnitOfWork unitOfWork, IBlobService blobService, ICurrentUserProvider currentUserProvider)
+    public UpdateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
     {
         _unitOfWork = unitOfWork;
-        _blobService = blobService;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -85,19 +82,8 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
             return Result<ProductResponse>.Failure("Digital product cannot have stock.");
         }
 
-        var uploadResult = await _blobService.UploadAsync(
-            command.Image.Stream,
-            command.Image.FileName,
-            command.Image.ContentType,
-            cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(uploadResult.BlobName) || string.IsNullOrWhiteSpace(uploadResult.ContainerName))
-            return Result<ProductResponse>.Failure("Unable to upload product image.");
-
         var updateInfoResult = product.UpdateInfo(
             command.Request.Title,
-            uploadResult.BlobName,
-            uploadResult.ContainerName,
             command.Request.Author,
             command.Request.Price,
             productTypes);
@@ -107,13 +93,6 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
 
         productModel.ApplyDomainState(product, productTypeModels);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
-
-        var blob = productModel.GetBlobReference();
-        string? coverImageUrl = productModel.CoverImageUrl;
-
-        if (blob.HasValue)
-            coverImageUrl = _blobService.GenerateReadSasUrl(blob.Value.ContainerName, blob.Value.BlobName);
-
-        return Result<ProductResponse>.Success(productModel.ToResponse(coverImageUrl));
+        return Result<ProductResponse>.Success(productModel.ToResponse());
     }
 }

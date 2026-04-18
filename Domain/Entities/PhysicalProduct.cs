@@ -11,14 +11,14 @@ namespace Platform.Catalog.API.Domain.Entities
 
         private PhysicalProduct() { }
 
-        public static DomainResult<PhysicalProduct> Create(string title, string blobName, string containerName, string author, long price, IEnumerable<ProductType> productTypes, int stock)
+        public static DomainResult<PhysicalProduct> Create(string title, string author, long price, IEnumerable<ProductType> productTypes, int stock)
         {
             var productTypesList = productTypes?.ToList() ?? [];
             if (stock < 0) return DomainResult<PhysicalProduct>.Failure(ProductErrors.InsufficientStock);
             if (productTypesList.Count == 0) return DomainResult<PhysicalProduct>.Failure(ProductErrors.InvalidType);
 
             var product = new PhysicalProduct();
-            var initializeResult = product.Initialize(title, blobName, containerName, author, price, productTypesList);
+            var initializeResult = product.Initialize(title, author, price, productTypesList);
             if (initializeResult.IsFailure)
                 return DomainResult<PhysicalProduct>.Failure(initializeResult.Error);
 
@@ -64,30 +64,29 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult.Success();
         }
 
-        public static PhysicalProduct Load(
-            Guid id,
-            string title,
-            string? coverImageUrl,
-            string author,
-            long price,
-            ProductStatus status,
-            DateTime? publishedAt,
-            BlobMetadata? blobMetadata,
-            int stock,
-            DateTime createdAt,
-            string? createdBy,
-            DateTime? updatedAt,
-            string? updatedBy,
-            bool isSoftDeleted,
-            DateTime? deletedAt,
-            string? deletedBy)
+        public static PhysicalProduct Load(ProductLoadData loadData, int stock)
         {
             var product = new PhysicalProduct
             {
                 Stock = stock
             };
 
-            product.LoadState(id, title, coverImageUrl, author, price, status, publishedAt, blobMetadata, createdAt, createdBy, updatedAt, updatedBy, isSoftDeleted, deletedAt, deletedBy);
+            product.LoadState(
+                loadData.Id,
+                loadData.Title,
+                loadData.Author,
+                loadData.Price,
+                loadData.Status,
+                loadData.PublishedAt,
+                loadData.BlobMetadata,
+                loadData.CreatedAt,
+                loadData.CreatedBy,
+                loadData.UpdatedAt,
+                loadData.UpdatedBy,
+                loadData.IsSoftDeleted,
+                loadData.DeletedAt,
+                loadData.DeletedBy);
+
             return product;
         }
     }

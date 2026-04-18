@@ -15,18 +15,6 @@ public sealed class UpdateProductValidator : AbstractValidator<UpdateProductComm
             .IsInEnum()
             .WithMessage("Product kind is invalid.");
 
-        RuleFor(x => x.Image.Stream)
-            .NotNull()
-            .WithMessage("Image stream is required.");
-
-        RuleFor(x => x.Image.FileName)
-            .NotEmpty()
-            .WithMessage("File name is required.");
-
-        RuleFor(x => x.Image.ContentType)
-            .NotEmpty()
-            .WithMessage("Content type is required.");
-
         RuleFor(x => x.Request.Title)
             .NotEmpty()
             .WithMessage("Product title is required.");

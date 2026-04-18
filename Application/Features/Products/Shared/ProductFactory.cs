@@ -8,8 +8,6 @@ public static class ProductFactory
     public static Result<Product> Create(
         ProductKind kind,
         string title,
-        string blobName,
-        string containerName,
         string author,
         long price,
         IReadOnlyCollection<ProductType> productTypes,
@@ -19,16 +17,12 @@ public static class ProductFactory
         {
             ProductKind.DigitalProduct => CreateDigitalProduct(
                 title,
-                blobName,
-                containerName,
                 author,
                 price,
                 productTypes),
 
             ProductKind.PhysicalProduct => CreatePhysicalProduct(
                 title,
-                blobName,
-                containerName,
                 author,
                 price,
                 productTypes,
@@ -40,16 +34,12 @@ public static class ProductFactory
 
     private static Result<Product> CreateDigitalProduct(
         string title,
-        string blobName,
-        string containerName,
         string author,
         long price,
         IReadOnlyCollection<ProductType> productTypes)
     {
         var result = DigitalProduct.Create(
             title,
-            blobName,
-            containerName,
             author,
             price,
             productTypes);
@@ -64,8 +54,6 @@ public static class ProductFactory
 
     private static Result<Product> CreatePhysicalProduct(
         string title,
-        string blobName,
-        string containerName,
         string author,
         long price,
         IReadOnlyCollection<ProductType> productTypes,
@@ -73,8 +61,6 @@ public static class ProductFactory
     {
         var result = PhysicalProduct.Create(
             title,
-            blobName,
-            containerName,
             author,
             price,
             productTypes,

@@ -71,40 +71,17 @@ public sealed class ProductsController : ControllerBase
 
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Create([FromForm] CreateProductRequest request, [FromForm] IFormFile file, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] CreateProductRequest request, CancellationToken cancellationToken)
     {
-        await using var stream = file.OpenReadStream();
-        var result = await _sender.Send(
-            new CreateProductCommand(
-                request,
-                new ProductImageRequest
-                {
-                    Stream = stream,
-                    FileName = file.FileName,
-                    ContentType = file.ContentType
-                }),
-            cancellationToken);
-
+        var result = await _sender.Send(new CreateProductCommand(request), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPut("{productId:guid}")]
     [Authorize]
-    public async Task<IActionResult> Update(Guid productId, [FromForm] UpdateProductRequest request, [FromForm] IFormFile file, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid productId, [FromBody] UpdateProductRequest request, CancellationToken cancellationToken)
     {
-        await using var stream = file.OpenReadStream();
-        var result = await _sender.Send(
-            new UpdateProductCommand(
-                productId,
-                request,
-                new ProductImageRequest
-                {
-                    Stream = stream,
-                    FileName = file.FileName,
-                    ContentType = file.ContentType
-                }),
-            cancellationToken);
-
+        var result = await _sender.Send(new UpdateProductCommand(productId, request), cancellationToken);
         return result.ToActionResult();
     }
 
