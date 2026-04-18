@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
-using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
@@ -13,13 +12,11 @@ namespace Platform.Catalog.API.Application.Features.Products.Queries.PendingProd
 public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingProductOfUserQuery, PagedResult<ProductResponse>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IBlobService _blobService;
     private readonly ICurrentUserProvider _currentUserProvider;
 
-    public GetPendingProductOfUserHandler(IUnitOfWork unitOfWork, IBlobService blobService, ICurrentUserProvider currentUserProvider)
+    public GetPendingProductOfUserHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
     {
         _unitOfWork = unitOfWork;
-        _blobService = blobService;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -35,6 +32,7 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
             .GetQueryable()
             .AsNoTracking()
             .Include(x => x.ProductTypes)
+            .Include(x => x.CoverImage)
             .Where(x => x.CreatedBy == userId && x.Status == ProductStatus.Draft);
 
         var totalCount = await productQuery.CountAsync(cancellationToken);
@@ -48,20 +46,7 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
             .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
-        var items = new List<ProductResponse>(productModels.Count);
-
-        foreach (var productModel in productModels)
-        {
-            string? coverImageUrl = null;
-            var blob = productModel.GetBlobReference();
-
-            if (blob.HasValue)
-            {
-                coverImageUrl = _blobService.GenerateReadSasUrl(blob.Value.ContainerName, blob.Value.BlobName);
-            }
-
-            items.Add(productModel.ToResponse(coverImageUrl));
-        }
+        var items = productModels.Select(x => x.ToResponse()).ToList();
 
         var pagedResult = new PagedResult<ProductResponse>
         {
