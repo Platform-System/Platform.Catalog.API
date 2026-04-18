@@ -27,6 +27,10 @@ namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
             builder.HasMany(x => x.MediaFiles)
                 .WithOne(x => x.Product)
                 .HasForeignKey(x => x.ProductId);
+
+            builder.HasOne(x => x.CoverImage)
+                .WithOne(x => x.Product)
+                .HasForeignKey<ProductCoverImageModel>(x => x.ProductId);
         }
     }
 }

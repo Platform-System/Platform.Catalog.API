@@ -11,7 +11,6 @@ namespace Platform.Catalog.API.Domain.Entities
     public abstract class Product : AggregateRoot
     {
         public string Title { get; protected set; } = null!;
-        public string? CoverImageUrl { get; protected set; }
         public string Author { get; protected set; } = null!;
         public long Price { get; protected set; }
         public ProductStatus Status { get; protected set; }
@@ -23,16 +22,17 @@ namespace Platform.Catalog.API.Domain.Entities
 
         private readonly List<ProductMedia> _mediaFiles = new();
         public IReadOnlyCollection<ProductMedia> MediaFiles => _mediaFiles.AsReadOnly();
+        public ProductCoverImage? CoverImage { get; private set; }
 
         protected Product() { }
 
-        protected DomainResult Initialize(string title, string blobName, string containerName, string author, long price, IEnumerable<ProductType> productTypes)
+        protected DomainResult Initialize(string title, string author, long price, IEnumerable<ProductType> productTypes)
         {
             var productTypesList = productTypes?.ToList() ?? [];
             if (productTypesList.Count == 0)
                 return DomainResult.Failure(ProductErrors.InvalidType);
 
-            var infoResult = SetInfo(title, blobName, containerName, author, price);
+            var infoResult = SetInfo(title, author, price);
             if (infoResult.IsFailure)
                 return infoResult;
 
@@ -44,30 +44,18 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult.Success();
         }
 
-        public DomainResult UpdateInfo(string title, string blobName, string containerName, string author, long price, List<ProductType> newTypes)
+        public DomainResult UpdateInfo(string title, string author, long price, List<ProductType> newTypes)
         {
             if (newTypes == null || !newTypes.Any())
                 return DomainResult.Failure(ProductErrors.InvalidType);
 
-            var validationResult = ValidateInfo(title, blobName, containerName, author, price);
+            var validationResult = ValidateInfo(title, author, price);
             if (validationResult.IsFailure)
                 return validationResult;
-
-            var currentBlob = GetBlob();
 
             Title = title.Trim();
             Author = author.Trim();
             Price = price;
-
-            if (ShouldReplaceBlob(currentBlob, blobName, containerName))
-            {
-                SetBlob(new BlobMetadata
-                {
-                    BlobName = blobName,
-                    ContainerName = containerName,
-                    UploadedAt = Clock.Now
-                });
-            }
 
             var currentTypes = _productTypes.ToList();
             foreach (var type in currentTypes) RemoveProductType(type);
@@ -76,47 +64,26 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult.Success();
         }
 
-        protected DomainResult SetInfo(string title, string blobName, string containerName, string author, long price)
+        protected DomainResult SetInfo(string title, string author, long price)
         {
-            var validationResult = ValidateInfo(title, blobName, containerName, author, price);
+            var validationResult = ValidateInfo(title, author, price);
             if (validationResult.IsFailure)
                 return validationResult;
-
-            var currentBlob = GetBlob();
 
             Title = title.Trim();
             Author = author.Trim();
             Price = price;
 
-            if (ShouldReplaceBlob(currentBlob, blobName, containerName))
-            {
-                SetBlob(new BlobMetadata
-                {
-                    BlobName = blobName,
-                    ContainerName = containerName,
-                    UploadedAt = Clock.Now
-                });
-            }
-
             return DomainResult.Success();
         }
 
-        private static DomainResult ValidateInfo(string title, string blobName, string containerName, string author, long price)
+        private static DomainResult ValidateInfo(string title, string author, long price)
         {
             if (string.IsNullOrWhiteSpace(title)) return DomainResult.Failure(DomainErrors.Validation.Required(nameof(Title)));
-            if (string.IsNullOrWhiteSpace(blobName)) return DomainResult.Failure(DomainErrors.Validation.Required("BlobName"));
-            if (string.IsNullOrWhiteSpace(containerName)) return DomainResult.Failure(DomainErrors.Validation.Required("ContainerName"));
             if (string.IsNullOrWhiteSpace(author)) return DomainResult.Failure(DomainErrors.Validation.Required(nameof(Author)));
             if (price < 0) return DomainResult.Failure(ProductErrors.InvalidPrice);
 
             return DomainResult.Success();
-        }
-
-        private static bool ShouldReplaceBlob(BlobMetadata? currentBlob, string blobName, string containerName)
-        {
-            return currentBlob == null
-                || !string.Equals(currentBlob.BlobName, blobName, StringComparison.Ordinal)
-                || !string.Equals(currentBlob.ContainerName, containerName, StringComparison.Ordinal);
         }
 
         public void AddProductType(ProductType productType)
@@ -150,7 +117,6 @@ namespace Platform.Catalog.API.Domain.Entities
 
             blob.Status = BlobStatus.Public;
             SetBlob(blob);
-            CoverImageUrl = publicUrl;
             return DomainResult.Success();
         }
 
@@ -190,7 +156,6 @@ namespace Platform.Catalog.API.Domain.Entities
         protected void LoadState(
             Guid id,
             string title,
-            string? coverImageUrl,
             string author,
             long price,
             ProductStatus status,
@@ -206,7 +171,6 @@ namespace Platform.Catalog.API.Domain.Entities
         {
             Id = id;
             Title = title;
-            CoverImageUrl = coverImageUrl;
             Author = author;
             Price = price;
             Status = status;
@@ -252,6 +216,16 @@ namespace Platform.Catalog.API.Domain.Entities
 
                 media.AttachProduct(this);
                 _mediaFiles.Add(media);
+            }
+        }
+
+        public void LoadCoverImage(ProductCoverImage? coverImage)
+        {
+            CoverImage = coverImage;
+
+            if (CoverImage is not null)
+            {
+                CoverImage.AttachProduct(this);
             }
         }
     }

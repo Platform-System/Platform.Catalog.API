@@ -17,7 +17,6 @@ public static class PersistenceMapper
         };
 
         model.Title = product.Title;
-        model.CoverImageUrl = product.CoverImageUrl;
         model.Author = product.Author;
         model.Price = product.Price;
         model.Status = product.Status;
@@ -31,7 +30,6 @@ public static class PersistenceMapper
     public static void ApplyDomainState(this ProductModel model, Product product, IEnumerable<ProductTypeModel>? productTypes = null)
     {
         model.Title = product.Title;
-        model.CoverImageUrl = product.CoverImageUrl;
         model.Author = product.Author;
         model.Price = product.Price;
         model.Status = product.Status;
@@ -56,48 +54,18 @@ public static class PersistenceMapper
 
     public static Product ToDomain(this ProductModel model)
     {
-        var blobMetadata = model.AdditionalInfo.GetProperty<BlobMetadata>("blob");
+        var loadData = model.ToLoadData();
 
         Product domain = model switch
         {
-            PhysicalProductModel physical => PhysicalProduct.Load(
-                physical.Id,
-                physical.Title,
-                physical.CoverImageUrl,
-                physical.Author,
-                physical.Price,
-                physical.Status,
-                physical.PublishedAt,
-                blobMetadata,
-                physical.Stock,
-                physical.CreatedAt,
-                physical.CreatedBy,
-                physical.UpdatedAt,
-                physical.UpdatedBy,
-                physical.IsSoftDeleted,
-                physical.DeletedAt,
-                physical.DeletedBy),
-            DigitalProductModel digital => DigitalProduct.Load(
-                digital.Id,
-                digital.Title,
-                digital.CoverImageUrl,
-                digital.Author,
-                digital.Price,
-                digital.Status,
-                digital.PublishedAt,
-                blobMetadata,
-                digital.CreatedAt,
-                digital.CreatedBy,
-                digital.UpdatedAt,
-                digital.UpdatedBy,
-                digital.IsSoftDeleted,
-                digital.DeletedAt,
-                digital.DeletedBy),
+            PhysicalProductModel physical => PhysicalProduct.Load(loadData, physical.Stock),
+            DigitalProductModel => DigitalProduct.Load(loadData),
             _ => throw new InvalidOperationException($"Unsupported product model type: {model.GetType().Name}")
         };
 
         domain.LoadProductTypes(model.ProductTypes.Select(ToDomain));
         domain.LoadMediaFiles(model.MediaFiles.Select(ToDomain));
+        domain.LoadCoverImage(model.CoverImage is null ? null : ToDomain(model.CoverImage));
 
         return domain;
     }
@@ -107,4 +75,26 @@ public static class PersistenceMapper
 
     public static ProductMedia ToDomain(this ProductMediaModel model)
         => ProductMedia.Load(model.Id, model.FileName, model.Url, model.ContentType, model.Size, model.Type, model.ProductId, model.SortOrder, model.AltText);
+
+    public static ProductCoverImage ToDomain(this ProductCoverImageModel model)
+        => ProductCoverImage.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.Url);
+
+    private static ProductLoadData ToLoadData(this ProductModel model)
+    {
+        return new ProductLoadData(
+            model.Id,
+            model.Title,
+            model.Author,
+            model.Price,
+            model.Status,
+            model.PublishedAt,
+            model.AdditionalInfo.GetProperty<BlobMetadata>("blob"),
+            model.CreatedAt,
+            model.CreatedBy,
+            model.UpdatedAt,
+            model.UpdatedBy,
+            model.IsSoftDeleted,
+            model.DeletedAt,
+            model.DeletedBy);
+    }
 }

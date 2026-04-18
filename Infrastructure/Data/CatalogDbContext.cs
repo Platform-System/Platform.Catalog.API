@@ -17,6 +17,7 @@ namespace Platform.Catalog.API.Infrastructure.Data
         public DbSet<DigitalProductModel> DigitalProducts { get; set; }
         public DbSet<ProductTypeModel> ProductTypes { get; set; }
         public DbSet<ProductMediaModel> ProductMedias { get; set; }
+        public DbSet<ProductCoverImageModel> ProductCoverImages { get; set; }
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
             configurationBuilder.Properties<Enum>()

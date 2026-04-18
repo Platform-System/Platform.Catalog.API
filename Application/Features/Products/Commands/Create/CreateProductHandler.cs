@@ -1,5 +1,4 @@
 using Platform.Application.Abstractions.Data;
-using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
@@ -14,13 +13,11 @@ namespace Platform.Catalog.API.Application.Features.Products.Commands.Create;
 public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand, ProductResponse>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IBlobService _blobService;
     private readonly ICurrentUserProvider _currentUserProvider;
 
-    public CreateProductHandler(IUnitOfWork unitOfWork, IBlobService blobService, ICurrentUserProvider currentUserProvider)
+    public CreateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
     {
         _unitOfWork = unitOfWork;
-        _blobService = blobService;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -42,20 +39,9 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
 
         var productTypes = productTypeModels.Select(x => x.ToDomain()).ToList();
 
-        var uploadResult = await _blobService.UploadAsync(
-            command.Image.Stream,
-            command.Image.FileName,
-            command.Image.ContentType,
-            cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(uploadResult.BlobName) || string.IsNullOrWhiteSpace(uploadResult.ContainerName))
-            return Result<ProductResponse>.Failure("Unable to upload product image.");
-
         var createResult = ProductFactory.Create(
             command.Request.Kind,
             command.Request.Title,
-            uploadResult.BlobName,
-            uploadResult.ContainerName,
             command.Request.Author,
             command.Request.Price,
             productTypes,
@@ -69,13 +55,6 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
         var productModel = product.ToPersistence(productTypeModels);
 
         await _unitOfWork.GetRepository<ProductModel>().AddAsync(productModel, cancellationToken);
-
-        var blob = productModel.GetBlobReference();
-        string? coverImageUrl = productModel.CoverImageUrl;
-
-        if (blob.HasValue)
-            coverImageUrl = _blobService.GenerateReadSasUrl(blob.Value.ContainerName, blob.Value.BlobName);
-
-        return Result<ProductResponse>.Success(productModel.ToResponse(coverImageUrl));
+        return Result<ProductResponse>.Success(productModel.ToResponse());
     }
 }

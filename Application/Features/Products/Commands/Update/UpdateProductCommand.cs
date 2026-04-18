@@ -7,12 +7,10 @@ public sealed class UpdateProductCommand : ICommand<ProductResponse>
 {
     public Guid ProductId { get; }
     public UpdateProductRequest Request { get; }
-    public ProductImageRequest Image { get; }
 
-    public UpdateProductCommand(Guid productId, UpdateProductRequest request, ProductImageRequest image)
+    public UpdateProductCommand(Guid productId, UpdateProductRequest request)
     {
         ProductId = productId;
         Request = request;
-        Image = image;
     }
 }

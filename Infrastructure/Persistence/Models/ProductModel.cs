@@ -17,7 +17,6 @@ public abstract class ProductModel : Entity
     }
 
     public string Title { get; set; } = null!;
-    public string? CoverImageUrl { get; set; }
     public string Author { get; set; } = null!;
     public long Price { get; set; }
     public ProductStatus Status { get; set; }
@@ -26,4 +25,5 @@ public abstract class ProductModel : Entity
 
     public List<ProductTypeModel> ProductTypes { get; set; } = new();
     public List<ProductMediaModel> MediaFiles { get; set; } = new();
+    public ProductCoverImageModel? CoverImage { get; set; }
 }
