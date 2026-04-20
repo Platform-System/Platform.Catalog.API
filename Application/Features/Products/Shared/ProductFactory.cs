@@ -1,6 +1,8 @@
 using Platform.Catalog.API.Domain.Entities;
 using Platform.BuildingBlocks.Responses;
 
+using Platform.SharedKernel.Enums;
+
 namespace Platform.Catalog.API.Application.Features.Products.Shared;
 
 public static class ProductFactory

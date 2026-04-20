@@ -6,6 +6,8 @@ using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
+using Platform.SharedKernel.Enums;
+
 namespace Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 
 public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, PagedResult<ProductResponse>>

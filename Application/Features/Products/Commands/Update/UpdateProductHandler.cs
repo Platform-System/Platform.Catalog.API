@@ -9,6 +9,8 @@ using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
+using Platform.SharedKernel.Enums;
+
 namespace Platform.Catalog.API.Application.Features.Products.Commands.Update;
 
 public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand, ProductResponse>

@@ -1,6 +1,8 @@
 using Platform.BuildingBlocks.DateTimes;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
+using Platform.SharedKernel.Enums;
+
 namespace Platform.Catalog.API.Application.Features.Products.Shared;
 
 public sealed class ProductResponse
