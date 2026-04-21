@@ -25,7 +25,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             return CatalogIntegrationResponses.Failure(CatalogErrorCodeGrpc.InvalidProductId, "Invalid product id.");
 
         var product = await _unitOfWork.GetRepository<ProductModel>().FindAsync(
-            x => x.Id == productId && x.Status != ProductStatus.Deleted,
+            x => x.Id == productId && x.Status == ProductStatus.Active,
             true,
             context.CancellationToken);
 
