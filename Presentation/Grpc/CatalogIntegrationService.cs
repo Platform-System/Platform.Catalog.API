@@ -37,8 +37,8 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         return product.ToSuccessResponse();
     }
 
-    public override async Task<DecreaseStockResponse> DecreaseStock(
-        DecreaseStockRequest request,
+    public override async Task<AdjustStockResponse> DecreaseStock(
+        AdjustStockRequest request,
         ServerCallContext context)
     {
         // Catalog là nơi giữ stock thật, nên checkout bên Ordering sẽ gọi
@@ -47,7 +47,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         {
             if (!Guid.TryParse(item.ProductId, out var productId))
             {
-                return new DecreaseStockResponse
+                return new AdjustStockResponse
                 {
                     IsSuccess = false,
                     ErrorCode = CatalogErrorCodeGrpc.InvalidProductId,
@@ -57,7 +57,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
             if (item.Quantity <= 0)
             {
-                return new DecreaseStockResponse
+                return new AdjustStockResponse
                 {
                     IsSuccess = false,
                     ErrorCode = CatalogErrorCodeGrpc.InvalidQuantity,
@@ -72,7 +72,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
             if (productModel is null)
             {
-                return new DecreaseStockResponse
+                return new AdjustStockResponse
                 {
                     IsSuccess = false,
                     ErrorCode = CatalogErrorCodeGrpc.ProductNotFound,
@@ -89,7 +89,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             var reduceStockResult = physicalProduct.ReduceStock(item.Quantity);
             if (reduceStockResult.IsFailure)
             {
-                return new DecreaseStockResponse
+                return new AdjustStockResponse
                 {
                     IsSuccess = false,
                     ErrorCode = CatalogErrorCodeGrpc.InsufficientStock,
@@ -102,7 +102,63 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
 
-        return new DecreaseStockResponse
+        return new AdjustStockResponse
+        {
+            IsSuccess = true
+        };
+    }
+    public override async Task<AdjustStockResponse> RestoreStock(AdjustStockRequest request, ServerCallContext context)
+    {
+        // Catalog tự xử lý trả kho khi Ordering cần hoàn tác stock cho các physical product.
+        foreach (var item in request.Items)
+        {
+            if (!Guid.TryParse(item.ProductId, out var productId))
+            {
+                return new AdjustStockResponse
+                {
+                    IsSuccess = false,
+                    ErrorCode = CatalogErrorCodeGrpc.InvalidProductId,
+                    ErrorMessage = "Invalid product id."
+                };
+            }
+
+            var productModel = await _unitOfWork.GetRepository<ProductModel>().FindAsync(
+                x => x.Id == productId && x.Status == ProductStatus.Active,
+                false,
+                context.CancellationToken);
+
+            if (productModel == null)
+            {
+                return new AdjustStockResponse
+                {
+                    IsSuccess = false,
+                    ErrorCode = CatalogErrorCodeGrpc.ProductNotFound,
+                    ErrorMessage = "Product not found."
+                };
+            }
+
+            if (productModel is not PhysicalProductModel physicalProductModel)
+                continue;
+
+            // Restock vẫn đi qua domain để giữ đúng rule nghiệp vụ, không sửa thẳng model.
+            var physicalProduct = (PhysicalProduct)physicalProductModel.ToDomain();
+            var restockResult = physicalProduct.Restock(item.Quantity);
+            if (restockResult.IsFailure)
+            {
+                return new AdjustStockResponse
+                {
+                    IsSuccess = false,
+                    ErrorCode = CatalogErrorCodeGrpc.InvalidQuantity,
+                    ErrorMessage = restockResult.Error.Message
+                };
+            }
+
+            physicalProductModel.ApplyDomainState(physicalProduct);
+        }
+
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
+
+        return new AdjustStockResponse
         {
             IsSuccess = true
         };
