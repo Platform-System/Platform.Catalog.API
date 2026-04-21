@@ -7,8 +7,19 @@ namespace Platform.Catalog.API.Application.Mappers;
 
 public static class PersistenceMapper
 {
+    // Ghi nhớ nhanh:
+    // - ToDomain: ProductModel -> Product domain để xử lý nghiệp vụ
+    // - ApplyDomainState: Product domain -> ProductModel cũ để cập nhật state rồi SaveChanges
+    // - ToPersistence: Product domain -> ProductModel mới để Add vào database
+
+    // Hàm này dùng khi cần tạo persistence model từ aggregate domain Product.
+    // Mục đích là biến object domain đang xử lý trong business thành object EF model
+    // để có thể Add vào DbContext và lưu xuống database.
     public static ProductModel ToPersistence(this Product product, IEnumerable<ProductTypeModel> productTypes)
     {
+        // Chọn đúng model con theo loại product:
+        // - PhysicalProduct -> PhysicalProductModel để giữ được Stock
+        // - DigitalProduct -> DigitalProductModel vì không có Stock
         ProductModel model = product switch
         {
             PhysicalProduct physical => new PhysicalProductModel(product.Id, physical.Stock),
@@ -27,6 +38,10 @@ public static class PersistenceMapper
         return model;
     }
 
+    // Hàm này dùng khi domain đã xử lý nghiệp vụ xong và mình muốn cập nhật ngược
+    // state mới từ domain về persistence model đang được EF tracking.
+    // Ví dụ: domain ReduceStock thành công thì hàm này sẽ copy Stock mới về model
+    // để SaveChanges có thể lưu đúng dữ liệu xuống database.
     public static void ApplyDomainState(this ProductModel model, Product product, IEnumerable<ProductTypeModel>? productTypes = null)
     {
         model.Title = product.Title;
@@ -38,11 +53,13 @@ public static class PersistenceMapper
 
         if (model is PhysicalProductModel physicalModel && product is PhysicalProduct physicalProduct)
         {
+            // Chỉ physical product mới có Stock nên cần copy riêng field này.
             physicalModel.Stock = physicalProduct.Stock;
         }
 
         if (productTypes is not null)
         {
+            // Nếu caller có truyền productTypes mới thì sync lại collection này.
             model.ProductTypes.Clear();
 
             foreach (var productType in productTypes)
@@ -52,6 +69,9 @@ public static class PersistenceMapper
         }
     }
 
+    // Hàm này dùng để dựng aggregate domain Product từ dữ liệu persistence model.
+    // Mục đích là đưa dữ liệu từ database về đúng domain object để tất cả business rule
+    // như ReduceStock, Restock, Update... đều chạy qua domain thay vì sửa model trực tiếp.
     public static Product ToDomain(this ProductModel model)
     {
         var loadData = model.ToLoadData();
@@ -63,6 +83,7 @@ public static class PersistenceMapper
             _ => throw new InvalidOperationException($"Unsupported product model type: {model.GetType().Name}")
         };
 
+        // Nạp thêm các dữ liệu liên quan để aggregate domain có trạng thái đầy đủ.
         domain.LoadProductTypes(model.ProductTypes.Select(ToDomain));
         domain.LoadMediaFiles(model.MediaFiles.Select(ToDomain));
         domain.LoadCoverImage(model.CoverImage is null ? null : ToDomain(model.CoverImage));
@@ -79,6 +100,9 @@ public static class PersistenceMapper
     public static ProductCoverImage ToDomain(this ProductCoverImageModel model)
         => ProductCoverImage.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.Url);
 
+    // Hàm phụ để gom dữ liệu chung của ProductModel thành ProductLoadData.
+    // Sau đó ProductLoadData sẽ được truyền vào PhysicalProduct.Load / DigitalProduct.Load
+    // để khởi tạo lại aggregate domain từ dữ liệu đã lưu trong database.
     private static ProductLoadData ToLoadData(this ProductModel model)
     {
         return new ProductLoadData(
