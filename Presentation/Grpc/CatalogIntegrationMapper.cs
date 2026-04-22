@@ -1,6 +1,7 @@
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.Catalog.Grpc;
+using Platform.Common.Grpc;
 
 namespace Platform.Catalog.API.Presentation.Grpc;
 
@@ -19,14 +20,17 @@ public static class CatalogIntegrationMapper
 
         return new GetProductCartSnapshotResponse
         {
-            IsSuccess = true,
-            Id = product.Id.ToString(),
-            Title = product.Title,
-            Price = product.Price,
-            Kind = kind,
-            IsActive = product.Status == ProductStatus.Active,
-            HasStock = product is PhysicalProductModel,
-            Stock = stock
+            Status = ResponseStatusExtensions.Success(),
+            Data = new ProductCartSnapshotData
+            {
+                Id = product.Id.ToString(),
+                Title = product.Title,
+                Price = product.Price,
+                Kind = kind,
+                IsActive = product.Status == ProductStatus.Active,
+                HasStock = product is PhysicalProductModel,
+                Stock = stock
+            }
         };
     }
 }

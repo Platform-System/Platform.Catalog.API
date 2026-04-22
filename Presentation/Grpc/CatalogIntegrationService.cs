@@ -5,6 +5,7 @@ using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.Catalog.Grpc;
+using Platform.Common.Grpc;
 
 namespace Platform.Catalog.API.Presentation.Grpc;
 
@@ -24,7 +25,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         // Catalog sở hữu dữ liệu product, nên service khác chỉ đọc qua
         // endpoint gRPC này thay vì query trực tiếp CatalogDb.
         if (!Guid.TryParse(request.ProductId, out var productId))
-            return CatalogIntegrationResponses.Failure(CatalogErrorCodeGrpc.InvalidProductId, "Invalid product id.");
+            return CatalogIntegrationResponses.Failure("Invalid product id.");
 
         var product = await _unitOfWork.GetRepository<ProductModel>().FindAsync(
             x => x.Id == productId && x.Status == ProductStatus.Active,
@@ -32,7 +33,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             context.CancellationToken);
 
         if (product is null)
-            return CatalogIntegrationResponses.Failure(CatalogErrorCodeGrpc.ProductNotFound, "Product not found.");
+            return CatalogIntegrationResponses.Failure("Product not found.");
 
         return product.ToSuccessResponse();
     }
@@ -46,24 +47,10 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         foreach (var item in request.Items)
         {
             if (!Guid.TryParse(item.ProductId, out var productId))
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.InvalidProductId,
-                    ErrorMessage = "Invalid product id."
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock("Invalid product id.");
 
             if (item.Quantity <= 0)
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.InvalidQuantity,
-                    ErrorMessage = "Quantity must be greater than 0."
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock("Quantity must be greater than 0.");
 
             var productModel = await _unitOfWork.GetRepository<ProductModel>().FindAsync(
                 x => x.Id == productId && x.Status == ProductStatus.Active,
@@ -71,14 +58,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
                 context.CancellationToken);
 
             if (productModel is null)
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.ProductNotFound,
-                    ErrorMessage = "Product not found."
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock("Product not found.");
 
             if (productModel is not PhysicalProductModel physicalProductModel)
                 continue;
@@ -88,14 +68,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             var physicalProduct = (PhysicalProduct)physicalProductModel.ToDomain();
             var reduceStockResult = physicalProduct.ReduceStock(item.Quantity);
             if (reduceStockResult.IsFailure)
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.InsufficientStock,
-                    ErrorMessage = reduceStockResult.Error.Message
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock(reduceStockResult.Error.Message);
 
             physicalProductModel.ApplyDomainState(physicalProduct);
         }
@@ -104,23 +77,17 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         return new AdjustStockResponse
         {
-            IsSuccess = true
+            Status = ResponseStatusExtensions.Success()
         };
     }
+
     public override async Task<AdjustStockResponse> RestoreStock(AdjustStockRequest request, ServerCallContext context)
     {
         // Catalog tự xử lý trả kho khi Ordering cần hoàn tác stock cho các physical product.
         foreach (var item in request.Items)
         {
             if (!Guid.TryParse(item.ProductId, out var productId))
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.InvalidProductId,
-                    ErrorMessage = "Invalid product id."
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock("Invalid product id.");
 
             var productModel = await _unitOfWork.GetRepository<ProductModel>().FindAsync(
                 x => x.Id == productId && x.Status == ProductStatus.Active,
@@ -128,14 +95,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
                 context.CancellationToken);
 
             if (productModel == null)
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.ProductNotFound,
-                    ErrorMessage = "Product not found."
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock("Product not found.");
 
             if (productModel is not PhysicalProductModel physicalProductModel)
                 continue;
@@ -144,14 +104,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             var physicalProduct = (PhysicalProduct)physicalProductModel.ToDomain();
             var restockResult = physicalProduct.Restock(item.Quantity);
             if (restockResult.IsFailure)
-            {
-                return new AdjustStockResponse
-                {
-                    IsSuccess = false,
-                    ErrorCode = CatalogErrorCodeGrpc.InvalidQuantity,
-                    ErrorMessage = restockResult.Error.Message
-                };
-            }
+                return CatalogIntegrationResponses.FailureAdjustStock(restockResult.Error.Message);
 
             physicalProductModel.ApplyDomainState(physicalProduct);
         }
@@ -160,7 +113,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         return new AdjustStockResponse
         {
-            IsSuccess = true
+            Status = ResponseStatusExtensions.Success()
         };
     }
 }
