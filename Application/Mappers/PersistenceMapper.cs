@@ -98,7 +98,32 @@ public static class PersistenceMapper
         => ProductMedia.Load(model.Id, model.FileName, model.Url, model.ContentType, model.Size, model.Type, model.ProductId, model.SortOrder, model.AltText);
 
     public static ProductCoverImage ToDomain(this ProductCoverImageModel model)
-        => ProductCoverImage.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.Url);
+        => ProductCoverImage.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.FileName, model.ContentType, model.Size, model.Url);
+
+    public static ProductCoverImageModel ToPersistence(this ProductCoverImage coverImage)
+    {
+        return new ProductCoverImageModel
+        {
+            Id = coverImage.Id,
+            ProductId = coverImage.ProductId,
+            BlobName = coverImage.BlobName,
+            ContainerName = coverImage.ContainerName,
+            FileName = coverImage.FileName,
+            ContentType = coverImage.ContentType,
+            Size = coverImage.Size,
+            Url = coverImage.Url
+        };
+    }
+
+    public static void ApplyDomainState(this ProductCoverImageModel model, ProductCoverImage coverImage)
+    {
+        model.BlobName = coverImage.BlobName;
+        model.ContainerName = coverImage.ContainerName;
+        model.FileName = coverImage.FileName;
+        model.ContentType = coverImage.ContentType;
+        model.Size = coverImage.Size;
+        model.Url = coverImage.Url;
+    }
 
     // Hàm phụ để gom dữ liệu chung của ProductModel thành ProductLoadData.
     // Sau đó ProductLoadData sẽ được truyền vào PhysicalProduct.Load / DigitalProduct.Load

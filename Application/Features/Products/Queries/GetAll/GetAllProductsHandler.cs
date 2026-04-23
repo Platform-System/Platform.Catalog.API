@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Platform.Application.Abstractions.Storage;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
@@ -13,10 +14,12 @@ namespace Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, PagedResult<ProductResponse>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IBlobService _blobService;
 
-    public GetAllProductsHandler(IUnitOfWork unitOfWork)
+    public GetAllProductsHandler(IUnitOfWork unitOfWork, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
+        _blobService = blobService;
     }
 
     public async Task<Result<PagedResult<ProductResponse>>> Handle(GetAllProductsQuery query, CancellationToken cancellationToken)
@@ -26,6 +29,7 @@ public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, P
             .GetQueryable()
             .AsNoTracking()
             .Include(x => x.ProductTypes)
+            .Include(x => x.CoverImage)
             .Where(x => x.Status == ProductStatus.Active);
 
         if (!string.IsNullOrWhiteSpace(query.Request.ProductTypeName))
@@ -62,7 +66,7 @@ public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, P
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount,
-            Items = items.Select(x => x.ToResponse()).ToList()
+            Items = items.Select(x => x.ToResponse(_blobService)).ToList()
         };
 
         return Result<PagedResult<ProductResponse>>.Success(result);

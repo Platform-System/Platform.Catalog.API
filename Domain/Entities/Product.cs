@@ -228,5 +228,11 @@ namespace Platform.Catalog.API.Domain.Entities
                 CoverImage.AttachProduct(this);
             }
         }
+
+        public void SetCoverImage(ProductCoverImage coverImage)
+        {
+            coverImage.AttachProduct(this);
+            CoverImage = coverImage;
+        }
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Platform.Application.Abstractions.Storage;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
@@ -13,11 +14,13 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IBlobService _blobService;
 
-    public GetPendingProductOfUserHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
+    public GetPendingProductOfUserHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
+        _blobService = blobService;
     }
 
     public async Task<Result<PagedResult<ProductResponse>>> Handle(GetPendingProductOfUserQuery query, CancellationToken cancellationToken)
@@ -46,7 +49,7 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
             .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
-        var items = productModels.Select(x => x.ToResponse()).ToList();
+        var items = productModels.Select(x => x.ToResponse(_blobService)).ToList();
 
         var pagedResult = new PagedResult<ProductResponse>
         {

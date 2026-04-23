@@ -28,6 +28,7 @@ public sealed class ApproveProductHandler : ICommandHandler<ApproveProductComman
             .GetQueryable()
             .Include(x => x.ProductTypes)
             .Include(x => x.MediaFiles)
+            .Include(x => x.CoverImage)
             .FirstOrDefaultAsync(x => x.Id == command.ProductId, cancellationToken);
 
         if (productModel is null || productModel.Status == ProductStatus.Deleted)
@@ -52,7 +53,18 @@ public sealed class ApproveProductHandler : ICommandHandler<ApproveProductComman
         if (activateResult.IsFailure)
             return Result<Unit>.Failure("Unable to approve product.");
 
+        if (product.CoverImage is not null)
+        {
+            var coverImageUrl = await _blobService.MakePublicAndGetUrl(product.CoverImage.ContainerName, product.CoverImage.BlobName);
+            product.CoverImage.Publish(coverImageUrl);
+        }
+
         productModel.ApplyDomainState(product);
+        if (productModel.CoverImage is not null && product.CoverImage is not null)
+        {
+            productModel.CoverImage.ApplyDomainState(product.CoverImage);
+        }
+
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
 
         return Result<Unit>.Success(Unit.Value);

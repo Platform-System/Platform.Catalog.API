@@ -18,6 +18,17 @@ public sealed class ProductCoverImageConfiguration : IEntityTypeConfiguration<Pr
             .IsRequired()
             .HasMaxLength(150);
 
+        builder.Property(x => x.FileName)
+            .IsRequired()
+            .HasMaxLength(255);
+
+        builder.Property(x => x.ContentType)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Size)
+            .IsRequired();
+
         builder.Property(x => x.Url);
 
         builder.HasIndex(x => x.ProductId)
