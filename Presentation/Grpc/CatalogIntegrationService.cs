@@ -116,4 +116,39 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             Status = ResponseStatusExtensions.Success()
         };
     }
+
+    public override async Task<AuthorizeProductCoverUploadResponse> AuthorizeProductCoverUpload(
+        AuthorizeProductCoverUploadRequest request,
+        ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.ProductId, out var productId))
+            return CatalogIntegrationResponses.FailureAuthorizeProductCoverUpload("Invalid product id.");
+
+        if (!Guid.TryParse(request.UserId, out var userId))
+            return CatalogIntegrationResponses.FailureAuthorizeProductCoverUpload("Invalid user id.");
+
+        var product = await _unitOfWork.GetRepository<ProductModel>().FindAsync(
+            x => x.Id == productId && x.Status != ProductStatus.Deleted,
+            true,
+            context.CancellationToken);
+
+        if (product is null)
+            return CatalogIntegrationResponses.FailureAuthorizeProductCoverUpload("Product not found.");
+
+        if (product.Status == ProductStatus.Active)
+            return CatalogIntegrationResponses.FailureAuthorizeProductCoverUpload("Active product cover cannot be updated.");
+
+        if (!Guid.TryParse(product.CreatedBy, out var ownerId) || ownerId != userId)
+            return CatalogIntegrationResponses.FailureAuthorizeProductCoverUpload("You do not own this product.");
+
+        var isAdmin = request.Roles.Any(role => string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase));
+        if (isAdmin)
+        {
+            return CatalogIntegrationResponses.SuccessAuthorizeProductCoverUpload(
+                ProductCoverUploadVisibility.Public);
+        }
+
+        return CatalogIntegrationResponses.SuccessAuthorizeProductCoverUpload(
+            ProductCoverUploadVisibility.Private);
+    }
 }

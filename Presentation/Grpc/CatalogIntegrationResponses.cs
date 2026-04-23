@@ -16,4 +16,20 @@ public static class CatalogIntegrationResponses
         {
             Status = ResponseStatusExtensions.Failure(errorMessage)
         };
+
+    public static AuthorizeProductCoverUploadResponse FailureAuthorizeProductCoverUpload(string errorMessage)
+        => new()
+        {
+            Status = ResponseStatusExtensions.Failure(errorMessage)
+        };
+
+    public static AuthorizeProductCoverUploadResponse SuccessAuthorizeProductCoverUpload(ProductCoverUploadVisibility visibility)
+        => new()
+        {
+            Status = ResponseStatusExtensions.Success(),
+            Data = new ProductCoverUploadAuthorizationData
+            {
+                Visibility = visibility
+            }
+        };
 }
