@@ -33,5 +33,11 @@ public sealed class SetProductCoverValidator : AbstractValidator<SetProductCover
         RuleFor(x => x.Request.Size)
             .GreaterThan(0)
             .WithMessage("File size must be greater than 0.");
+
+        RuleFor(x => x.Request.AltText)
+            .NotEmpty()
+            .WithMessage("Alt text is required.")
+            .MaximumLength(500)
+            .WithMessage("Alt text must not exceed 500 characters.");
     }
 }

@@ -95,10 +95,10 @@ public static class PersistenceMapper
         => ProductType.Load(model.Id, model.Name, model.Status);
 
     public static ProductMedia ToDomain(this ProductMediaModel model)
-        => ProductMedia.Load(model.Id, model.FileName, model.Url, model.ContentType, model.Size, model.Type, model.ProductId, model.SortOrder, model.AltText);
+        => ProductMedia.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.FileName, model.ContentType, model.Size, model.Type, model.SortOrder, model.AltText, model.Url);
 
     public static ProductCoverImage ToDomain(this ProductCoverImageModel model)
-        => ProductCoverImage.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.FileName, model.ContentType, model.Size, model.Url);
+        => ProductCoverImage.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.FileName, model.ContentType, model.Size, model.AltText, model.Url);
 
     public static ProductCoverImageModel ToPersistence(this ProductCoverImage coverImage)
     {
@@ -111,7 +111,26 @@ public static class PersistenceMapper
             FileName = coverImage.FileName,
             ContentType = coverImage.ContentType,
             Size = coverImage.Size,
+            AltText = coverImage.AltText,
             Url = coverImage.Url
+        };
+    }
+
+    public static ProductMediaModel ToPersistence(this ProductMedia media)
+    {
+        return new ProductMediaModel
+        {
+            Id = media.Id,
+            ProductId = media.ProductId,
+            BlobName = media.BlobName,
+            ContainerName = media.ContainerName,
+            FileName = media.FileName,
+            ContentType = media.ContentType,
+            Size = media.Size,
+            AltText = media.AltText,
+            Url = media.Url,
+            Type = media.Type,
+            SortOrder = media.SortOrder
         };
     }
 
@@ -122,7 +141,21 @@ public static class PersistenceMapper
         model.FileName = coverImage.FileName;
         model.ContentType = coverImage.ContentType;
         model.Size = coverImage.Size;
+        model.AltText = coverImage.AltText;
         model.Url = coverImage.Url;
+    }
+
+    public static void ApplyDomainState(this ProductMediaModel model, ProductMedia media)
+    {
+        model.BlobName = media.BlobName;
+        model.ContainerName = media.ContainerName;
+        model.FileName = media.FileName;
+        model.ContentType = media.ContentType;
+        model.Size = media.Size;
+        model.AltText = media.AltText;
+        model.Url = media.Url;
+        model.Type = media.Type;
+        model.SortOrder = media.SortOrder;
     }
 
     // Hàm phụ để gom dữ liệu chung của ProductModel thành ProductLoadData.

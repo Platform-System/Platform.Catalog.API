@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Platform.Application.Abstractions.Data;
+using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.ProductMedias.Shared;
@@ -10,10 +11,12 @@ namespace Platform.Catalog.API.Application.Features.ProductMedias.Queries.GetAll
 public sealed class GetAllProductMediasHandler : IQueryHandler<GetAllProductMediasQuery, PagedResult<ProductMediaResponse>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IBlobService _blobService;
 
-    public GetAllProductMediasHandler(IUnitOfWork unitOfWork)
+    public GetAllProductMediasHandler(IUnitOfWork unitOfWork, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
+        _blobService = blobService;
     }
 
     public async Task<Result<PagedResult<ProductMediaResponse>>> Handle(GetAllProductMediasQuery query, CancellationToken cancellationToken)
@@ -36,9 +39,20 @@ public sealed class GetAllProductMediasHandler : IQueryHandler<GetAllProductMedi
                 false,
                 cancellationToken);
 
+        var items = productMedias.Items.Select(media =>
+        {
+            var resolvedUrl = string.IsNullOrWhiteSpace(media.Url)
+                ? (!string.IsNullOrWhiteSpace(media.ContainerName) && !string.IsNullOrWhiteSpace(media.BlobName)
+                    ? _blobService.GenerateReadSasUrl(media.ContainerName, media.BlobName)
+                    : null)
+                : media.Url;
+
+            return media.ToResponse(resolvedUrl);
+        }).ToList();
+
         var pagedResult = new PagedResult<ProductMediaResponse>
         {
-            Items = productMedias.Items.Select(x => x.ToResponse()).ToList(),
+            Items = items,
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = productMedias.TotalCount

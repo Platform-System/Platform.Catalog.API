@@ -14,7 +14,8 @@ public static class ProductCoverImageMapper
                 request.ContainerName,
                 request.FileName,
                 request.ContentType,
-                request.Size);
+                request.Size,
+                request.AltText);
         }
 
         product.CoverImage.UpdateMetadata(
@@ -22,7 +23,8 @@ public static class ProductCoverImageMapper
             request.ContainerName,
             request.FileName,
             request.ContentType,
-            request.Size);
+            request.Size,
+            request.AltText);
 
         return product.CoverImage;
     }

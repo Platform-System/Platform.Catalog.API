@@ -4,13 +4,15 @@ namespace Platform.Catalog.API.Application.Features.ProductMedias.Shared;
 
 public static class ProductMediaMapper
 {
-    public static ProductMediaResponse ToResponse(this ProductMediaModel media)
+    public static ProductMediaResponse ToResponse(this ProductMediaModel media, string? resolvedUrl)
     {
         return new ProductMediaResponse
         {
             Id = media.Id,
+            BlobName = media.BlobName,
+            ContainerName = media.ContainerName,
             FileName = media.FileName,
-            Url = media.Url,
+            Url = resolvedUrl,
             ContentType = media.ContentType,
             Size = media.Size,
             AltText = media.AltText,

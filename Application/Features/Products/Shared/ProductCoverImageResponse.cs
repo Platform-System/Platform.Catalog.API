@@ -9,6 +9,8 @@ public sealed class ProductCoverImageResponse
     public string FileName { get; init; } = null!;
     public string ContentType { get; init; } = null!;
     public long Size { get; init; }
+    public string? AltText { get; init; }
+    public string? Url { get; init; }
 
     public static ProductCoverImageResponse FromModel(ProductCoverImageModel coverImage)
     {
@@ -18,7 +20,9 @@ public sealed class ProductCoverImageResponse
             ContainerName = coverImage.ContainerName,
             FileName = coverImage.FileName,
             ContentType = coverImage.ContentType,
-            Size = coverImage.Size
+            Size = coverImage.Size,
+            AltText = coverImage.AltText,
+            Url = coverImage.Url
         };
     }
 }

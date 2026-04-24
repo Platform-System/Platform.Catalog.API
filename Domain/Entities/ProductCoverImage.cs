@@ -1,18 +1,7 @@
-using Platform.Domain.Common;
-
 namespace Platform.Catalog.API.Domain.Entities
 {
-    public sealed class ProductCoverImage : Entity
+    public sealed class ProductCoverImage : ProductAsset
     {
-        public Guid ProductId { get; private set; }
-        public Product Product { get; private set; } = default!;
-        public string BlobName { get; private set; } = default!;
-        public string ContainerName { get; private set; } = default!;
-        public string FileName { get; private set; } = default!;
-        public string ContentType { get; private set; } = default!;
-        public long Size { get; private set; }
-        public string? Url { get; private set; }
-
         private ProductCoverImage() { }
 
         public ProductCoverImage(
@@ -22,15 +11,9 @@ namespace Platform.Catalog.API.Domain.Entities
             string fileName,
             string contentType,
             long size,
-            string? url = null)
+            string? altText = null,
+            string? url = null) : base(productId, blobName, containerName, fileName, contentType, size, altText, url)
         {
-            ProductId = productId;
-            BlobName = blobName;
-            ContainerName = containerName;
-            FileName = fileName;
-            ContentType = contentType;
-            Size = size;
-            Url = url;
         }
 
         public static ProductCoverImage Load(
@@ -41,33 +24,23 @@ namespace Platform.Catalog.API.Domain.Entities
             string fileName,
             string contentType,
             long size,
+            string? altText,
             string? url)
         {
-            return new ProductCoverImage(productId, blobName, containerName, fileName, contentType, size, url)
+            return new ProductCoverImage(productId, blobName, containerName, fileName, contentType, size, altText, url)
             {
                 Id = id
             };
         }
 
-        public void AttachProduct(Product product)
+        public void UpdateMetadata(string blobName, string containerName, string fileName, string contentType, long size, string? altText = null)
         {
-            Product = product;
-            ProductId = product.Id;
-        }
-
-        public void UpdateMetadata(string blobName, string containerName, string fileName, string contentType, long size)
-        {
-            BlobName = blobName;
-            ContainerName = containerName;
-            FileName = fileName;
-            ContentType = contentType;
-            Size = size;
-            Url = null;
+            UpdateAsset(blobName, containerName, fileName, contentType, size, altText);
         }
 
         public void Publish(string url)
         {
-            Url = url;
+            PublishAsset(url);
         }
     }
 }
