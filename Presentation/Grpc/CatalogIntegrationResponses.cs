@@ -32,4 +32,16 @@ public static class CatalogIntegrationResponses
                 Visibility = visibility
             }
         };
+
+    public static SetProductCoverResponse FailureSetProductCover(string errorMessage)
+        => new()
+        {
+            Status = ResponseStatusExtensions.Failure(errorMessage)
+        };
+
+    public static SetProductCoverResponse SuccessSetProductCover()
+        => new()
+        {
+            Status = ResponseStatusExtensions.Success()
+        };
 }

@@ -7,11 +7,9 @@ using Platform.Catalog.API.Application.Features.Products.Commands.ApproveProduct
 using Platform.Catalog.API.Application.Features.Products.Commands.Create;
 using Platform.Catalog.API.Application.Features.Products.Commands.Delete;
 using Platform.Catalog.API.Application.Features.Products.Commands.Update;
-using Platform.Catalog.API.Application.Features.Products.Commands.SetCover;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 using Platform.Catalog.API.Application.Features.Products.Queries.PendingProduct;
 using Platform.Catalog.API.Application.Features.Products.Queries.PendingProductOfUser;
-using Platform.Catalog.API.Application.Features.Products.Shared;
 
 namespace Platform.Catalog.API.Presentation;
 
@@ -86,13 +84,6 @@ public sealed class ProductsController : ControllerBase
         return result.ToActionResult();
     }
 
-    [HttpPut("{productId:guid}/cover")]
-    [Authorize]
-    public async Task<IActionResult> SetCover(Guid productId, [FromBody] SetProductCoverRequest request, CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(new SetProductCoverCommand(productId, request), cancellationToken);
-        return result.ToActionResult();
-    }
 
     [HttpDelete("{productId:guid}")]
     [Authorize]

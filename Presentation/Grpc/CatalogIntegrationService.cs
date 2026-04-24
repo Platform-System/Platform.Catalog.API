@@ -1,4 +1,5 @@
 using Grpc.Core;
+using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
 using Platform.Catalog.API.Application.Mappers;
 using Platform.Catalog.API.Domain.Entities;
@@ -150,5 +151,70 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         return CatalogIntegrationResponses.SuccessAuthorizeProductCoverUpload(
             ProductCoverUploadVisibility.Private);
+    }
+
+    public override async Task<SetProductCoverResponse> SetProductCover(
+        SetProductCoverRequest request,
+        ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.ProductId, out var productId))
+            return CatalogIntegrationResponses.FailureSetProductCover("Invalid product id.");
+
+        if (!Guid.TryParse(request.UserId, out var userId))
+            return CatalogIntegrationResponses.FailureSetProductCover("Invalid user id.");
+
+        if (string.IsNullOrWhiteSpace(request.BlobName))
+            return CatalogIntegrationResponses.FailureSetProductCover("Blob name is required.");
+
+        if (string.IsNullOrWhiteSpace(request.ContainerName))
+            return CatalogIntegrationResponses.FailureSetProductCover("Container name is required.");
+
+        if (string.IsNullOrWhiteSpace(request.FileName))
+            return CatalogIntegrationResponses.FailureSetProductCover("File name is required.");
+
+        if (string.IsNullOrWhiteSpace(request.ContentType))
+            return CatalogIntegrationResponses.FailureSetProductCover("Content type is required.");
+
+        if (request.Size <= 0)
+            return CatalogIntegrationResponses.FailureSetProductCover("File size must be greater than 0.");
+
+        if (string.IsNullOrWhiteSpace(request.AltText))
+            return CatalogIntegrationResponses.FailureSetProductCover("Alt text is required.");
+
+        var productModel = await _unitOfWork
+            .GetRepository<ProductModel>()
+            .GetQueryable()
+            .Include(x => x.ProductTypes)
+            .Include(x => x.MediaFiles)
+            .Include(x => x.CoverImage)
+            .FirstOrDefaultAsync(x => x.Id == productId, context.CancellationToken);
+
+        if (productModel is null || productModel.Status == ProductStatus.Deleted)
+            return CatalogIntegrationResponses.FailureSetProductCover("Product not found.");
+
+        if (productModel.Status == ProductStatus.Active)
+            return CatalogIntegrationResponses.FailureSetProductCover("Active product cover cannot be updated.");
+
+        if (!Guid.TryParse(productModel.CreatedBy, out var ownerId) || ownerId != userId)
+            return CatalogIntegrationResponses.FailureSetProductCover("You do not own this product.");
+
+        var product = productModel.ToDomain();
+        var coverImage = request.ToCoverImage(product);
+        product.SetCoverImage(coverImage);
+
+        if (productModel.CoverImage is null)
+        {
+            productModel.CoverImage = coverImage.ToPersistence();
+            await _unitOfWork.GetRepository<ProductCoverImageModel>().AddAsync(productModel.CoverImage, context.CancellationToken);
+        }
+        else
+        {
+            productModel.CoverImage.ApplyDomainState(coverImage);
+            _unitOfWork.GetRepository<ProductCoverImageModel>().Update(productModel.CoverImage);
+        }
+
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
+
+        return CatalogIntegrationResponses.SuccessSetProductCover();
     }
 }

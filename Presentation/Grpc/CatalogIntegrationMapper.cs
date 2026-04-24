@@ -1,3 +1,4 @@
+using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.Catalog.Grpc;
@@ -32,5 +33,30 @@ public static class CatalogIntegrationMapper
                 Stock = stock
             }
         };
+    }
+
+    public static ProductCoverImage ToCoverImage(this SetProductCoverRequest request, Product product)
+    {
+        if (product.CoverImage is null)
+        {
+            return new ProductCoverImage(
+                product.Id,
+                request.BlobName,
+                request.ContainerName,
+                request.FileName,
+                request.ContentType,
+                request.Size,
+                request.AltText);
+        }
+
+        product.CoverImage.UpdateMetadata(
+            request.BlobName,
+            request.ContainerName,
+            request.FileName,
+            request.ContentType,
+            request.Size,
+            request.AltText);
+
+        return product.CoverImage;
     }
 }
