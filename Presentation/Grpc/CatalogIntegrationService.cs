@@ -163,22 +163,22 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         if (!Guid.TryParse(request.UserId, out var userId))
             return CatalogIntegrationResponses.FailureSetProductCover("Invalid user id.");
 
-        if (string.IsNullOrWhiteSpace(request.BlobName))
+        if (string.IsNullOrWhiteSpace(request.Cover.BlobName))
             return CatalogIntegrationResponses.FailureSetProductCover("Blob name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.ContainerName))
+        if (string.IsNullOrWhiteSpace(request.Cover.ContainerName))
             return CatalogIntegrationResponses.FailureSetProductCover("Container name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.FileName))
+        if (string.IsNullOrWhiteSpace(request.Cover.FileName))
             return CatalogIntegrationResponses.FailureSetProductCover("File name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.ContentType))
+        if (string.IsNullOrWhiteSpace(request.Cover.ContentType))
             return CatalogIntegrationResponses.FailureSetProductCover("Content type is required.");
 
-        if (request.Size <= 0)
+        if (request.Cover.Size <= 0)
             return CatalogIntegrationResponses.FailureSetProductCover("File size must be greater than 0.");
 
-        if (string.IsNullOrWhiteSpace(request.AltText))
+        if (string.IsNullOrWhiteSpace(request.Cover.AltText))
             return CatalogIntegrationResponses.FailureSetProductCover("Alt text is required.");
 
         var productModel = await _unitOfWork
@@ -217,4 +217,65 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         return CatalogIntegrationResponses.SuccessSetProductCover();
     }
+
+    public override async Task<SetProductMediasResponse> SetProductMedias(
+        SetProductMediasRequest request,
+        ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.ProductId, out var productId))
+            return CatalogIntegrationResponses.FailureSetProductMedias("Invalid product id.");
+
+        if (!Guid.TryParse(request.UserId, out var userId))
+            return CatalogIntegrationResponses.FailureSetProductMedias("Invalid user id.");
+
+        if (request.Items == null || request.Items.Count == 0)
+            return CatalogIntegrationResponses.FailureSetProductMedias("At least one media item is required.");
+
+        var productModel = await _unitOfWork
+            .GetRepository<ProductModel>()
+            .GetQueryable()
+            .Include(x => x.MediaFiles)
+            .FirstOrDefaultAsync(x => x.Id == productId, context.CancellationToken);
+
+        if (productModel is null || productModel.Status == ProductStatus.Deleted)
+            return CatalogIntegrationResponses.FailureSetProductMedias("Product not found.");
+
+        if (productModel.Status == ProductStatus.Active)
+            return CatalogIntegrationResponses.FailureSetProductMedias("Active product medias cannot be updated.");
+
+        if (!Guid.TryParse(productModel.CreatedBy, out var ownerId) || ownerId != userId)
+            return CatalogIntegrationResponses.FailureSetProductMedias("You do not own this product.");
+
+        // 1. Chuyển persistence model sang Domain
+        var product = productModel.ToDomain();
+
+        // 2. Chuẩn bị danh sách Media mới dưới dạng Domain Entities
+        var newMediaEntities = new List<ProductMedia>();
+        var sortOrder = 0;
+        foreach (var item in request.Items)
+        {
+            newMediaEntities.Add(item.ToProductMedia(productId, sortOrder++));
+        }
+
+        // 3. Thực hiện thay đổi thông qua Domain logic
+        product.SetMediaFiles(newMediaEntities);
+
+        // 4. Đồng bộ lại trạng thái từ Domain xuống Persistence layer
+        // Xóa cũ
+        foreach (var oldMedia in productModel.MediaFiles.ToList())
+        {
+            _unitOfWork.GetRepository<ProductMediaModel>().Remove(oldMedia);
+        }
+
+        // Thêm mới từ domain state
+        foreach (var media in product.MediaFiles)
+        {
+            await _unitOfWork.GetRepository<ProductMediaModel>().AddAsync(media.ToPersistence(), context.CancellationToken);
+        }
+
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
+
+        return CatalogIntegrationResponses.SuccessSetProductMedias();
+    }
 }
+

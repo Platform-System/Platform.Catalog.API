@@ -234,5 +234,15 @@ namespace Platform.Catalog.API.Domain.Entities
             coverImage.AttachProduct(this);
             CoverImage = coverImage;
         }
+
+        public void SetMediaFiles(IEnumerable<ProductMedia> mediaFiles)
+        {
+            _mediaFiles.Clear();
+            foreach (var media in mediaFiles)
+            {
+                media.AttachProduct(this);
+                _mediaFiles.Add(media);
+            }
+        }
     }
 }

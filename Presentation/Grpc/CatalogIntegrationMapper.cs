@@ -41,22 +41,36 @@ public static class CatalogIntegrationMapper
         {
             return new ProductCoverImage(
                 product.Id,
-                request.BlobName,
-                request.ContainerName,
-                request.FileName,
-                request.ContentType,
-                request.Size,
-                request.AltText);
+                request.Cover.BlobName,
+                request.Cover.ContainerName,
+                request.Cover.FileName,
+                request.Cover.ContentType,
+                request.Cover.Size,
+                request.Cover.AltText);
         }
 
         product.CoverImage.UpdateMetadata(
-            request.BlobName,
-            request.ContainerName,
-            request.FileName,
-            request.ContentType,
-            request.Size,
-            request.AltText);
+            request.Cover.BlobName,
+            request.Cover.ContainerName,
+            request.Cover.FileName,
+            request.Cover.ContentType,
+            request.Cover.Size,
+            request.Cover.AltText);
 
         return product.CoverImage;
+    }
+
+    public static ProductMedia ToProductMedia(this UploadedFileInfo file, Guid productId, int sortOrder = 0)
+    {
+        return new ProductMedia(
+            productId,
+            file.BlobName,
+            file.ContainerName,
+            file.FileName,
+            file.ContentType,
+            file.Size,
+            MediaType.Image, // Default to Image for now
+            sortOrder,
+            file.AltText);
     }
 }

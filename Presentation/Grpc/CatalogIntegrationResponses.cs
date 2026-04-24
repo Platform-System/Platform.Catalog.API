@@ -44,4 +44,16 @@ public static class CatalogIntegrationResponses
         {
             Status = ResponseStatusExtensions.Success()
         };
+
+    public static SetProductMediasResponse FailureSetProductMedias(string errorMessage)
+        => new()
+        {
+            Status = ResponseStatusExtensions.Failure(errorMessage)
+        };
+
+    public static SetProductMediasResponse SuccessSetProductMedias()
+        => new()
+        {
+            Status = ResponseStatusExtensions.Success()
+        };
 }
