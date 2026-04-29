@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -39,7 +39,7 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductTypes",
+                name: "Categories",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -55,7 +55,7 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductTypes", x => x.Id);
+                    table.PrimaryKey("PK_Categories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -119,23 +119,23 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductModelProductTypeModel",
+                name: "ProductModelCategoryModel",
                 columns: table => new
                 {
-                    ProductTypesId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoriesId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductsId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductModelProductTypeModel", x => new { x.ProductTypesId, x.ProductsId });
+                    table.PrimaryKey("PK_ProductModelCategoryModel", x => new { x.CategoriesId, x.ProductsId });
                     table.ForeignKey(
-                        name: "FK_ProductModelProductTypeModel_ProductTypes_ProductTypesId",
-                        column: x => x.ProductTypesId,
-                        principalTable: "ProductTypes",
+                        name: "FK_ProductModelCategoryModel_Categories_CategoriesId",
+                        column: x => x.CategoriesId,
+                        principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProductModelProductTypeModel_Products_ProductsId",
+                        name: "FK_ProductModelCategoryModel_Products_ProductsId",
                         column: x => x.ProductsId,
                         principalTable: "Products",
                         principalColumn: "Id",
@@ -154,8 +154,8 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductModelProductTypeModel_ProductsId",
-                table: "ProductModelProductTypeModel",
+                name: "IX_ProductModelCategoryModel_ProductsId",
+                table: "ProductModelCategoryModel",
                 column: "ProductsId");
         }
 
@@ -169,10 +169,10 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                 name: "ProductMedias");
 
             migrationBuilder.DropTable(
-                name: "ProductModelProductTypeModel");
+                name: "ProductModelCategoryModel");
 
             migrationBuilder.DropTable(
-                name: "ProductTypes");
+                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "Products");

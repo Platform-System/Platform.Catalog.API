@@ -6,24 +6,26 @@ using System.Text.Json;
 namespace Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 [Table("Products")]
-public abstract class ProductModel : Entity
+public class ProductModel : Entity
 {
-    protected ProductModel()
+    public ProductModel()
     {
     }
 
-    protected ProductModel(Guid id) : base(id)
+    public ProductModel(Guid id) : base(id)
     {
     }
 
     public string Title { get; set; } = null!;
     public string Author { get; set; } = null!;
     public long Price { get; set; }
+    public int Stock { get; set; }
+    public Guid CategoryId { get; set; }
     public ProductStatus Status { get; set; }
     public DateTime? PublishedAt { get; set; }
     public JsonDocument? AdditionalInfo { get; set; }
 
-    public List<ProductTypeModel> ProductTypes { get; set; } = new();
+    public CategoryModel Category { get; set; } = null!;
     public List<ProductMediaModel> MediaFiles { get; set; } = new();
     public ProductCoverImageModel? CoverImage { get; set; }
 }

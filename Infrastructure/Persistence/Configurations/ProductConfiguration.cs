@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -10,19 +10,18 @@ namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
         {
             builder.HasKey(x => x.Id);
 
-            builder.HasDiscriminator<string>("ProductKind")
-                .HasValue<DigitalProductModel>("Digital")
-                .HasValue<PhysicalProductModel>("Physical");
-
             builder.Property(x => x.Title).IsRequired().HasMaxLength(250);
             builder.Property(x => x.Author).IsRequired().HasMaxLength(150);
             builder.Property(x => x.Price).IsRequired();
+            builder.Property(x => x.Stock).IsRequired();
+            builder.Property(x => x.CategoryId).IsRequired();
 
             builder.Property(x => x.AdditionalInfo)
                 .HasColumnType("jsonb");
 
-            builder.HasMany(x => x.ProductTypes)
-                .WithMany(x => x.Products);
+            builder.HasOne(x => x.Category)
+                .WithMany(x => x.Products)
+                .HasForeignKey(x => x.CategoryId);
 
             builder.HasMany(x => x.MediaFiles)
                 .WithOne(x => x.Product)

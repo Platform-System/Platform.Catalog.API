@@ -26,7 +26,7 @@ public sealed class ApproveProductHandler : ICommandHandler<ApproveProductComman
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
             .GetQueryable()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.MediaFiles)
             .Include(x => x.CoverImage)
             .FirstOrDefaultAsync(x => x.Id == command.ProductId, cancellationToken);

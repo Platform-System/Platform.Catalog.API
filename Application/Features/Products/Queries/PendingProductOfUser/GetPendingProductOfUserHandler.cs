@@ -34,7 +34,7 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
             .GetRepository<ProductModel>()
             .GetQueryable()
             .AsNoTracking()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.CoverImage)
             .Where(x => x.CreatedBy == userId && x.Status == ProductStatus.Draft);
 

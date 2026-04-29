@@ -4,19 +4,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-[Table("ProductTypes")]
-public sealed class ProductTypeModel : Entity
+[Table("Categories")]
+public sealed class CategoryModel : Entity
 {
-    public ProductTypeModel()
+    public CategoryModel()
     {
     }
 
-    public ProductTypeModel(Guid id) : base(id)
+    public CategoryModel(Guid id) : base(id)
     {
     }
 
     public string Name { get; set; } = null!;
-    public ProductTypeStatus Status { get; set; }
+    public CategoryStatus Status { get; set; }
 
     public List<ProductModel> Products { get; set; } = new();
 }

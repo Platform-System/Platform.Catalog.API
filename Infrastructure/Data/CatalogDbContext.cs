@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.Infrastructure.Data;
@@ -13,9 +13,7 @@ namespace Platform.Catalog.API.Infrastructure.Data
         {
         }
         public DbSet<ProductModel> Products { get; set; }
-        public DbSet<PhysicalProductModel> PhysicalProducts { get; set; }
-        public DbSet<DigitalProductModel> DigitalProducts { get; set; }
-        public DbSet<ProductTypeModel> ProductTypes { get; set; }
+        public DbSet<CategoryModel> Categories { get; set; }
         public DbSet<ProductMediaModel> ProductMedias { get; set; }
         public DbSet<ProductCoverImageModel> ProductCoverImages { get; set; }
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

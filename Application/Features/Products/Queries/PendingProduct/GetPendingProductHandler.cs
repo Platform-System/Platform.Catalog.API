@@ -26,7 +26,7 @@ public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQu
             .GetRepository<ProductModel>()
             .GetQueryable()
             .AsNoTracking()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.CoverImage)
             .Where(x => x.Status == ProductStatus.Draft);
 

@@ -29,7 +29,7 @@ public sealed class DeleteProductHandler : ICommandHandler<DeleteProductCommand,
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
             .GetQueryable()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.MediaFiles)
             .FirstOrDefaultAsync(
                 x => x.Id == command.ProductId && x.Status != ProductStatus.Deleted,
@@ -47,7 +47,7 @@ public sealed class DeleteProductHandler : ICommandHandler<DeleteProductCommand,
         if (deleteResult.IsFailure)
             return Result<ProductResponse>.Failure("Unable to delete product.");
 
-        productModel.ApplyDomainState(product, []);
+        productModel.ApplyDomainState(product);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
 
         return Result<ProductResponse>.Success(productModel.ToResponse());

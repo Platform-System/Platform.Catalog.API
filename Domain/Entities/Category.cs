@@ -3,44 +3,44 @@ using Platform.Catalog.API.Domain.Enums;
 
 namespace Platform.Catalog.API.Domain.Entities
 {
-    public class ProductType : AggregateRoot
+    public class Category : AggregateRoot
     {
         public string Name { get; private set; } = null!;
-        public ProductTypeStatus Status { get; private set; }
+        public CategoryStatus Status { get; private set; }
 
         private readonly List<Product> _products = new();
         public IReadOnlyCollection<Product> Products => _products.AsReadOnly();
 
-        private ProductType() { }
+        private Category() { }
 
-        public ProductType(string name)
+        public Category(string name)
         {
             SetName(name);
-            Status = ProductTypeStatus.Active;
+            Status = CategoryStatus.Active;
         }
 
-        public static DomainResult<ProductType> Create(string name)
+        public static DomainResult<Category> Create(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
-                return DomainResult<ProductType>.Failure(DomainErrors.Validation.Required(nameof(Name)));
+                return DomainResult<Category>.Failure(DomainErrors.Validation.Required(nameof(Name)));
 
-            return DomainResult<ProductType>.Success(new ProductType(name));
+            return DomainResult<Category>.Success(new Category(name));
         }
 
         public DomainResult UpdateName(string name)
         {
-            if (Status != ProductTypeStatus.Active)
-                return DomainResult.Failure(DomainErrors.Global.NotFound(nameof(ProductType), Id));
+            if (Status != CategoryStatus.Active)
+                return DomainResult.Failure(DomainErrors.Global.NotFound(nameof(Category), Id));
 
             return SetName(name);
         }
 
         public DomainResult Delete()
         {
-            if (Status == ProductTypeStatus.Deleted)
+            if (Status == CategoryStatus.Deleted)
                 return DomainResult.Success();
 
-            Status = ProductTypeStatus.Deleted;
+            Status = CategoryStatus.Deleted;
             return DomainResult.Success();
         }
 
@@ -67,16 +67,16 @@ namespace Platform.Catalog.API.Domain.Entities
             _products.Remove(product);
         }
 
-        public static ProductType Load(Guid id, string name, ProductTypeStatus status)
+        public static Category Load(Guid id, string name, CategoryStatus status)
         {
-            var productType = new ProductType
+            var category = new Category
             {
                 Id = id,
                 Name = name,
                 Status = status
             };
 
-            return productType;
+            return category;
         }
     }
 }

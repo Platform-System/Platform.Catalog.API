@@ -5,11 +5,8 @@ using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Application.Mappers;
-using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
-
-using Platform.SharedKernel.Enums;
 
 namespace Platform.Catalog.API.Application.Features.Products.Commands.Update;
 
@@ -32,7 +29,7 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
             .GetQueryable()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.MediaFiles)
             .FirstOrDefaultAsync(x => x.Id == command.ProductId, cancellationToken);
 
@@ -45,55 +42,32 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
         if (!Guid.TryParse(productModel.CreatedBy, out var ownerId) || ownerId != currentUserId)
             return Result<ProductResponse>.Failure("You do not own this product.");
 
-        var requestedTypeIds = command.Request.ProductTypeIds.Distinct().ToList();
+        var categoryModel = await _unitOfWork
+            .GetRepository<CategoryModel>()
+            .FindAsync(x => x.Id == command.Request.CategoryId && x.Status == CategoryStatus.Active, true, cancellationToken);
 
-        var productTypeModels = await _unitOfWork
-            .GetRepository<ProductTypeModel>()
-            .GetQueryable()
-            .Where(x => requestedTypeIds.Contains(x.Id) && x.Status == ProductTypeStatus.Active)
-            .ToListAsync(cancellationToken);
-
-        if (productTypeModels.Count != requestedTypeIds.Count)
-            return Result<ProductResponse>.Failure("One or more product types are invalid.");
+        if (categoryModel is null)
+            return Result<ProductResponse>.Failure("Category is invalid.");
 
         var product = productModel.ToDomain();
-        var productTypes = productTypeModels.Select(x => x.ToDomain()).ToList();
+        var category = categoryModel.ToDomain();
 
-        var currentKind = productModel is PhysicalProductModel
-            ? ProductKind.PhysicalProduct
-            : ProductKind.DigitalProduct;
-
-        if (command.Request.Kind != currentKind)
-            return Result<ProductResponse>.Failure("Product kind cannot be changed.");
-
-        if (product is PhysicalProduct physicalProduct)
+        var stockResult = product.UpdateStock(command.Request.Stock);
+        if (stockResult.IsFailure)
         {
-            if (command.Request.Stock is null)
-            {
-                return Result<ProductResponse>.Failure("Stock count is required for physical products.");
-            }
-
-            var stockResult = physicalProduct.UpdateStock(command.Request.Stock.Value);
-            if (stockResult.IsFailure)
-            {
-                return Result<ProductResponse>.Failure("Unable to update product stock.");
-            }
-        }
-        else if (command.Request.Stock is not null)
-        {
-            return Result<ProductResponse>.Failure("Digital product cannot have stock.");
+            return Result<ProductResponse>.Failure("Unable to update product stock.");
         }
 
         var updateInfoResult = product.UpdateInfo(
             command.Request.Title,
             command.Request.Author,
             command.Request.Price,
-            productTypes);
+            category);
 
         if (updateInfoResult.IsFailure)
             return Result<ProductResponse>.Failure("Unable to update product information.");
 
-        productModel.ApplyDomainState(product, productTypeModels);
+        productModel.ApplyDomainState(product, categoryModel);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
         return Result<ProductResponse>.Success(productModel.ToResponse());
     }

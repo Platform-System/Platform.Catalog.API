@@ -61,17 +61,14 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             if (productModel is null)
                 return CatalogIntegrationResponses.FailureAdjustStock("Product not found.");
 
-            if (productModel is not PhysicalProductModel physicalProductModel)
-                continue;
-
             // Luôn đổi persistence model sang domain để áp business rule ReduceStock,
             // tránh chỉnh stock trực tiếp trên model EF.
-            var physicalProduct = (PhysicalProduct)physicalProductModel.ToDomain();
-            var reduceStockResult = physicalProduct.ReduceStock(item.Quantity);
+            var product = productModel.ToDomain();
+            var reduceStockResult = product.ReduceStock(item.Quantity);
             if (reduceStockResult.IsFailure)
                 return CatalogIntegrationResponses.FailureAdjustStock(reduceStockResult.Error.Message);
 
-            physicalProductModel.ApplyDomainState(physicalProduct);
+            productModel.ApplyDomainState(product);
         }
 
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
@@ -98,16 +95,13 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             if (productModel == null)
                 return CatalogIntegrationResponses.FailureAdjustStock("Product not found.");
 
-            if (productModel is not PhysicalProductModel physicalProductModel)
-                continue;
-
             // Restock vẫn đi qua domain để giữ đúng rule nghiệp vụ, không sửa thẳng model.
-            var physicalProduct = (PhysicalProduct)physicalProductModel.ToDomain();
-            var restockResult = physicalProduct.Restock(item.Quantity);
+            var product = productModel.ToDomain();
+            var restockResult = product.Restock(item.Quantity);
             if (restockResult.IsFailure)
                 return CatalogIntegrationResponses.FailureAdjustStock(restockResult.Error.Message);
 
-            physicalProductModel.ApplyDomainState(physicalProduct);
+            productModel.ApplyDomainState(product);
         }
 
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
@@ -184,7 +178,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
             .GetQueryable()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.MediaFiles)
             .Include(x => x.CoverImage)
             .FirstOrDefaultAsync(x => x.Id == productId, context.CancellationToken);

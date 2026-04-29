@@ -8,17 +8,17 @@ using System.Text.Json;
 
 namespace Platform.Catalog.API.Domain.Entities
 {
-    public abstract class Product : AggregateRoot
+    public class Product : AggregateRoot
     {
         public string Title { get; protected set; } = null!;
         public string Author { get; protected set; } = null!;
         public long Price { get; protected set; }
+        public int Stock { get; private set; }
         public ProductStatus Status { get; protected set; }
         public DateTime? PublishedAt { get; protected set; }
         public JsonDocument? AdditionalInfo { get; protected set; }
 
-        private readonly List<ProductType> _productTypes = new();
-        public IReadOnlyCollection<ProductType> ProductTypes => _productTypes.AsReadOnly();
+        public Category Category { get; private set; } = null!;
 
         private readonly List<ProductMedia> _mediaFiles = new();
         public IReadOnlyCollection<ProductMedia> MediaFiles => _mediaFiles.AsReadOnly();
@@ -26,27 +26,40 @@ namespace Platform.Catalog.API.Domain.Entities
 
         protected Product() { }
 
-        protected DomainResult Initialize(string title, string author, long price, IEnumerable<ProductType> productTypes)
+        public static DomainResult<Product> Create(string title, string author, long price, Category category, int stock)
         {
-            var productTypesList = productTypes?.ToList() ?? [];
-            if (productTypesList.Count == 0)
+            if (category is null)
+                return DomainResult<Product>.Failure(ProductErrors.InvalidType);
+
+            var product = new Product();
+            var initializeResult = product.Initialize(title, author, price, category);
+            if (initializeResult.IsFailure)
+                return DomainResult<Product>.Failure(initializeResult.Error);
+
+            var stockResult = product.SetStock(stock);
+            if (stockResult.IsFailure)
+                return DomainResult<Product>.Failure(stockResult.Error);
+
+            return DomainResult<Product>.Success(product);
+        }
+
+        protected DomainResult Initialize(string title, string author, long price, Category category)
+        {
+            if (category is null)
                 return DomainResult.Failure(ProductErrors.InvalidType);
 
             var infoResult = SetInfo(title, author, price);
             if (infoResult.IsFailure)
                 return infoResult;
 
-            foreach (var type in productTypesList)
-            {
-                AddProductType(type);
-            }
+            SetCategory(category);
 
             return DomainResult.Success();
         }
 
-        public DomainResult UpdateInfo(string title, string author, long price, List<ProductType> newTypes)
+        public DomainResult UpdateInfo(string title, string author, long price, Category category)
         {
-            if (newTypes == null || !newTypes.Any())
+            if (category is null)
                 return DomainResult.Failure(ProductErrors.InvalidType);
 
             var validationResult = ValidateInfo(title, author, price);
@@ -57,10 +70,43 @@ namespace Platform.Catalog.API.Domain.Entities
             Author = author.Trim();
             Price = price;
 
-            var currentTypes = _productTypes.ToList();
-            foreach (var type in currentTypes) RemoveProductType(type);
-            foreach (var type in newTypes) AddProductType(type);
+            SetCategory(category);
 
+            return DomainResult.Success();
+        }
+
+        public DomainResult UpdateStock(int quantity)
+        {
+            return SetStock(quantity);
+        }
+
+        private DomainResult SetStock(int quantity)
+        {
+            if (quantity < 0)
+                return DomainResult.Failure(ProductErrors.InsufficientStock);
+
+            Stock = quantity;
+            return DomainResult.Success();
+        }
+
+        public DomainResult Restock(int quantity)
+        {
+            if (quantity <= 0)
+                return DomainResult.Failure(DomainErrors.Validation.InvalidInput);
+
+            Stock += quantity;
+            return DomainResult.Success();
+        }
+
+        public DomainResult ReduceStock(int quantity)
+        {
+            if (quantity <= 0)
+                return DomainResult.Failure(DomainErrors.Validation.InvalidInput);
+
+            if (Stock < quantity)
+                return DomainResult.Failure(ProductErrors.InsufficientStock);
+
+            Stock -= quantity;
             return DomainResult.Success();
         }
 
@@ -86,25 +132,29 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult.Success();
         }
 
-        public void AddProductType(ProductType productType)
+        public void SetCategory(Category category)
         {
-            if (productType == null) return;
-            if (_productTypes.Any(x => x.Id == productType.Id)) return;
+            if (category == null) return;
+            if (Category?.Id == category.Id) return;
 
-            _productTypes.Add(productType);
-            productType.AddProduct(this);
+            if (Category is not null)
+            {
+                Category.RemoveProduct(this);
+            }
+
+            Category = category;
+            category.AddProduct(this);
         }
 
-        public void RemoveProductType(ProductType productType)
+        public void RemoveCategory()
         {
-            var existing = _productTypes.FirstOrDefault(x => x.Id == productType.Id);
-            if (existing == null) return;
+            if (Category is null) return;
 
-            _productTypes.Remove(existing);
-            existing.RemoveProduct(this);
+            Category.RemoveProduct(this);
+            Category = null!;
         }
 
-        public string GetProductTypeNames() => string.Join(", ", _productTypes.Select(x => x.Name));
+        public string GetCategoryName() => Category?.Name ?? string.Empty;
 
         public void SetBlob(BlobMetadata blob) => AdditionalInfo = AdditionalInfo.Set(AdditionalInfoExtensions.BlobKey, blob);
         public BlobMetadata? GetBlob() => AdditionalInfo.Get<BlobMetadata>(AdditionalInfoExtensions.BlobKey);
@@ -134,13 +184,6 @@ namespace Platform.Catalog.API.Domain.Entities
 
             Status = ProductStatus.Deleted;
 
-            var types = _productTypes.ToList();
-            foreach (var type in types)
-            {
-                type.RemoveProduct(this);
-            }
-            _productTypes.Clear();
-
             return DomainResult.Success();
         }
 
@@ -152,6 +195,32 @@ namespace Platform.Catalog.API.Domain.Entities
         }
 
         public void SetDraft() => Status = ProductStatus.Draft;
+
+        public static Product Load(ProductLoadData loadData, int stock)
+        {
+            var product = new Product
+            {
+                Stock = stock
+            };
+
+            product.LoadState(
+                loadData.Id,
+                loadData.Title,
+                loadData.Author,
+                loadData.Price,
+                loadData.Status,
+                loadData.PublishedAt,
+                loadData.BlobMetadata,
+                loadData.CreatedAt,
+                loadData.CreatedBy,
+                loadData.UpdatedAt,
+                loadData.UpdatedBy,
+                loadData.IsSoftDeleted,
+                loadData.DeletedAt,
+                loadData.DeletedBy);
+
+            return product;
+        }
 
         protected void LoadState(
             Guid id,
@@ -195,14 +264,9 @@ namespace Platform.Catalog.API.Domain.Entities
             }
         }
 
-        public void LoadProductTypes(IEnumerable<ProductType> productTypes)
+        public void LoadCategory(Category category)
         {
-            _productTypes.Clear();
-
-            foreach (var productType in productTypes)
-            {
-                AddProductType(productType);
-            }
+            SetCategory(category);
         }
 
         public void LoadMediaFiles(IEnumerable<ProductMedia> mediaFiles)

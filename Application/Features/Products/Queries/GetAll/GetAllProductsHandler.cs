@@ -7,8 +7,6 @@ using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-using Platform.SharedKernel.Enums;
-
 namespace Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 
 public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, PagedResult<ProductResponse>>
@@ -28,29 +26,20 @@ public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, P
             .GetRepository<ProductModel>()
             .GetQueryable()
             .AsNoTracking()
-            .Include(x => x.ProductTypes)
+            .Include(x => x.Category)
             .Include(x => x.CoverImage)
             .Where(x => x.Status == ProductStatus.Active);
 
-        if (!string.IsNullOrWhiteSpace(query.Request.ProductTypeName))
+        if (!string.IsNullOrWhiteSpace(query.Request.CategoryName))
         {
-            var productTypeName = query.Request.ProductTypeName.Trim();
-            productQuery = productQuery.Where(x => x.ProductTypes.Any(t => t.Name.Contains(productTypeName)));
+            var categoryName = query.Request.CategoryName.Trim();
+            productQuery = productQuery.Where(x => x.Category.Name.Contains(categoryName));
         }
 
         if (!string.IsNullOrWhiteSpace(query.Request.Title))
         {
             var title = query.Request.Title.Trim();
             productQuery = productQuery.Where(x => x.Title.Contains(title));
-        }
-
-        if (query.Request.Kind == ProductKind.DigitalProduct)
-        {
-            productQuery = productQuery.Where(x => x is DigitalProductModel);
-        }
-        else if (query.Request.Kind == ProductKind.PhysicalProduct)
-        {
-            productQuery = productQuery.Where(x => x is PhysicalProductModel);
         }
 
         var totalCount = await productQuery.CountAsync(cancellationToken);

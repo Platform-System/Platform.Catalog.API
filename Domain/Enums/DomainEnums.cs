@@ -14,7 +14,7 @@ namespace Platform.Catalog.API.Domain.Enums
         Deleted
     }
 
-    public enum ProductTypeStatus
+    public enum CategoryStatus
     {
         Active,
         Deleted

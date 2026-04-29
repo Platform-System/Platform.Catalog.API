@@ -4,6 +4,7 @@ using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Application.Mappers;
+using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
@@ -26,25 +27,18 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
         if (!Guid.TryParse(_currentUserProvider.CurrentUserId, out var currentUserId))
             return Result<ProductResponse>.Failure("Current user is invalid.");
 
-        var requestedTypeIds = command.Request.ProductTypeIds.Distinct().ToList();
+        var categoryModel = await _unitOfWork
+            .GetRepository<CategoryModel>()
+            .FindAsync(x => x.Id == command.Request.CategoryId && x.Status == CategoryStatus.Active, true, cancellationToken);
 
-        var productTypeModels = await _unitOfWork
-            .GetRepository<ProductTypeModel>()
-            .GetQueryable()
-            .Where(x => requestedTypeIds.Contains(x.Id) && x.Status == ProductTypeStatus.Active)
-            .ToListAsync(cancellationToken);
+        if (categoryModel is null)
+            return Result<ProductResponse>.Failure("Category is invalid.");
 
-        if (productTypeModels.Count != requestedTypeIds.Count)
-            return Result<ProductResponse>.Failure("One or more product types are invalid.");
-
-        var productTypes = productTypeModels.Select(x => x.ToDomain()).ToList();
-
-        var createResult = ProductFactory.Create(
-            command.Request.Kind,
+        var createResult = Product.Create(
             command.Request.Title,
             command.Request.Author,
             command.Request.Price,
-            productTypes,
+            categoryModel.ToDomain(),
             command.Request.Stock);
 
         if (!createResult.IsSuccess)
@@ -52,7 +46,7 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
 
         var product = createResult.Value;
         product.SetDraft();
-        var productModel = product.ToPersistence(productTypeModels);
+        var productModel = product.ToPersistence(categoryModel);
 
         await _unitOfWork.GetRepository<ProductModel>().AddAsync(productModel, cancellationToken);
         return Result<ProductResponse>.Success(productModel.ToResponse());
