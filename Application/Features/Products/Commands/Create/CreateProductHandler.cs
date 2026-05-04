@@ -1,4 +1,5 @@
 using Platform.Application.Abstractions.Data;
+using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
@@ -15,11 +16,13 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IBlobService _blobService;
 
-    public CreateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
+    public CreateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
+        _blobService = blobService;
     }
 
     public async Task<Result<ProductResponse>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
@@ -49,6 +52,6 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
         var productModel = product.ToPersistence(categoryModel);
 
         await _unitOfWork.GetRepository<ProductModel>().AddAsync(productModel, cancellationToken);
-        return Result<ProductResponse>.Success(productModel.ToResponse());
+        return Result<ProductResponse>.Success(productModel.ToResponse(productModel.ResolveCoverImageUrl(_blobService)));
     }
 }

@@ -41,7 +41,9 @@ public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQu
             .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
-        var items = productModels.Select(x => x.ToResponse(_blobService)).ToList();
+        var items = productModels
+            .Select(x => x.ToResponse(x.ResolveCoverImageUrl(_blobService)))
+            .ToList();
 
         var pagedResult = new PagedResult<ProductResponse>
         {

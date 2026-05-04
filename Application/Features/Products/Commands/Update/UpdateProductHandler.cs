@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
+using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
@@ -14,11 +15,13 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IBlobService _blobService;
 
-    public UpdateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
+    public UpdateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
+        _blobService = blobService;
     }
 
     public async Task<Result<ProductResponse>> Handle(UpdateProductCommand command, CancellationToken cancellationToken)
@@ -31,6 +34,7 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
             .GetQueryable()
             .Include(x => x.Category)
             .Include(x => x.MediaFiles)
+            .Include(x => x.CoverImage)
             .FirstOrDefaultAsync(x => x.Id == command.ProductId, cancellationToken);
 
         if (productModel is null || productModel.Status == ProductStatus.Deleted)
@@ -69,6 +73,6 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
 
         productModel.ApplyDomainState(product, categoryModel);
         _unitOfWork.GetRepository<ProductModel>().Update(productModel);
-        return Result<ProductResponse>.Success(productModel.ToResponse());
+        return Result<ProductResponse>.Success(productModel.ToResponse(productModel.ResolveCoverImageUrl(_blobService)));
     }
 }

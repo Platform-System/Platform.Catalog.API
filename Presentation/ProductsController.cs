@@ -8,6 +8,7 @@ using Platform.Catalog.API.Application.Features.Products.Commands.Create;
 using Platform.Catalog.API.Application.Features.Products.Commands.Delete;
 using Platform.Catalog.API.Application.Features.Products.Commands.Update;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
+using Platform.Catalog.API.Application.Features.Products.Queries.GetById;
 using Platform.Catalog.API.Application.Features.Products.Queries.PendingProduct;
 using Platform.Catalog.API.Application.Features.Products.Queries.PendingProductOfUser;
 
@@ -37,6 +38,24 @@ public sealed class ProductsController : ControllerBase
         };
 
         var result = await _sender.Send(query, cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("{productId:guid}")]
+    public async Task<IActionResult> GetById(Guid productId, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetProductByIdQuery(productId), cancellationToken);
+
+        if (!result.IsSuccess && result.Errors.Any(error => error.Contains("not found", StringComparison.OrdinalIgnoreCase)))
+        {
+            return NotFound(new
+            {
+                Success = false,
+                Data = result.Value,
+                Errors = result.Errors
+            });
+        }
+
         return result.ToActionResult();
     }
 

@@ -1,5 +1,4 @@
 using Platform.BuildingBlocks.DateTimes;
-using Platform.Application.Abstractions.Storage;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Application.Features.Products.Shared;
@@ -20,17 +19,13 @@ public sealed class ProductResponse
 
 public static class ProductResponseMapper
 {
-    public static ProductResponse ToResponse(this ProductModel product, IBlobService? blobService = null)
+    public static ProductResponse ToResponse(this ProductModel product, string? resolvedCoverImageUrl)
     {
         return new ProductResponse
         {
             Id = product.Id,
             Title = product.Title,
-            CoverImageUrl = product.CoverImage is null
-                ? null
-                : string.IsNullOrWhiteSpace(product.CoverImage.Url)
-                    ? blobService?.GenerateReadSasUrl(product.CoverImage.ContainerName, product.CoverImage.BlobName)
-                    : product.CoverImage.Url,
+            CoverImageUrl = resolvedCoverImageUrl,
             CoverImage = product.CoverImage is null
                 ? null
                 : ProductCoverImageResponse.FromModel(product.CoverImage),
@@ -42,5 +37,4 @@ public static class ProductResponseMapper
             CreatedAt = product.CreatedAt == default ? Clock.Now : product.CreatedAt
         };
     }
-
 }

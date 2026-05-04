@@ -55,7 +55,9 @@ public sealed class GetAllProductsHandler : IQueryHandler<GetAllProductsQuery, P
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount,
-            Items = items.Select(x => x.ToResponse(_blobService)).ToList()
+            Items = items
+                .Select(x => x.ToResponse(x.ResolveCoverImageUrl(_blobService)))
+                .ToList()
         };
 
         return Result<PagedResult<ProductResponse>>.Success(result);
