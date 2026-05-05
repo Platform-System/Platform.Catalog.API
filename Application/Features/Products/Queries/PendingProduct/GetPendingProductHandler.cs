@@ -27,7 +27,7 @@ public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQu
             .GetPagedAsync(
                 query.Page,
                 query.PageSize,
-                x => x.Status == ProductStatus.Draft,
+                x => x.Status == ProductStatus.PendingAdminReview,
                 x => x.CreatedAt,
                 true,
                 cancellationToken,

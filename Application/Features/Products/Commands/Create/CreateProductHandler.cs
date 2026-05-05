@@ -10,7 +10,6 @@ using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Platform.Catalog.API.Application.Features.Products.Commands.Create;
 
@@ -39,15 +38,33 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
         if (categoryModel is null)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Category is invalid.");
 
+        var storeMemberModel = await _unitOfWork
+            .GetRepository<StoreMemberModel>()
+            .FindAsync(
+                x => x.UserId == currentUserId
+                    && x.Status == StoreMemberStatus.Active
+                    && x.Store.Status != StoreStatus.Deleted
+                    && x.Store.Status != StoreStatus.Suspended,
+                true,
+                cancellationToken,
+                x => x.Store);
+
+        if (storeMemberModel is null)
+            return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Current user does not belong to an available store.");
+
+        if (!storeMemberModel.Store.IsVerified && storeMemberModel.Role != StoreMemberRole.Owner)
+            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can create products before the store is verified.");
+
         var createResult = Product.Create(
             command.Request.Title,
             command.Request.Author,
             command.Request.Price,
+            storeMemberModel.StoreId,
             categoryModel.ToDomain(),
             command.Request.Stock);
 
         if (!createResult.IsSuccess)
-            return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Create failure");
+            return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Unable to create product.");
 
         var product = createResult.Value;
         product.SetDraft();

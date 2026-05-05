@@ -36,7 +36,10 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
             .GetPagedAsync(
                 query.Page,
                 query.PageSize,
-                x => x.CreatedBy == userId && x.Status == ProductStatus.Draft,
+                x => x.CreatedBy == userId
+                    && (x.Status == ProductStatus.Draft
+                        || x.Status == ProductStatus.PendingOwnerReview
+                        || x.Status == ProductStatus.PendingAdminReview),
                 x => x.CreatedAt,
                 true,
                 cancellationToken,

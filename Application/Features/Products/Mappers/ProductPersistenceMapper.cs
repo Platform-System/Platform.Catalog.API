@@ -18,6 +18,7 @@ public static class ProductPersistenceMapper
             Stock = product.Stock,
             CategoryId = category.Id,
             Category = category,
+            StoreId = product.StoreId,
             Status = product.Status,
             PublishedAt = product.PublishedAt,
             AdditionalInfo = product.AdditionalInfo
@@ -30,6 +31,7 @@ public static class ProductPersistenceMapper
         model.Author = product.Author;
         model.Price = product.Price;
         model.Stock = product.Stock;
+        model.StoreId = product.StoreId;
         model.Status = product.Status;
         model.PublishedAt = product.PublishedAt;
         model.AdditionalInfo = product.AdditionalInfo;
@@ -43,8 +45,23 @@ public static class ProductPersistenceMapper
 
     public static Product ToDomain(this ProductModel model)
     {
-        var loadData = model.ToLoadData();
-        var domain = Product.Load(loadData, model.Stock);
+        var domain = Product.Load(
+            model.Id,
+            model.Title,
+            model.Author,
+            model.Price,
+            model.StoreId,
+            model.Status,
+            model.PublishedAt,
+            model.AdditionalInfo.GetProperty<BlobMetadata>("blob"),
+            model.Stock,
+            model.CreatedAt,
+            model.CreatedBy,
+            model.UpdatedAt,
+            model.UpdatedBy,
+            model.IsSoftDeleted,
+            model.DeletedAt,
+            model.DeletedBy);
 
         domain.LoadCategory(model.Category.ToDomain());
         domain.LoadMediaFiles(model.MediaFiles.Select(ToDomain));
@@ -115,24 +132,5 @@ public static class ProductPersistenceMapper
         model.Url = media.Url;
         model.Type = media.Type;
         model.SortOrder = media.SortOrder;
-    }
-
-    private static ProductLoadData ToLoadData(this ProductModel model)
-    {
-        return new ProductLoadData(
-            model.Id,
-            model.Title,
-            model.Author,
-            model.Price,
-            model.Status,
-            model.PublishedAt,
-            model.AdditionalInfo.GetProperty<BlobMetadata>("blob"),
-            model.CreatedAt,
-            model.CreatedBy,
-            model.UpdatedAt,
-            model.UpdatedBy,
-            model.IsSoftDeleted,
-            model.DeletedAt,
-            model.DeletedBy);
     }
 }

@@ -2,7 +2,6 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
-using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
@@ -42,8 +41,27 @@ public sealed class DeleteProductHandler : ICommandHandler<DeleteProductCommand,
         if (productModel is null)
             return Result<ProductResponse>.Failure(StatusCodes.Status404NotFound, "Product not found.");
 
-        if (!Guid.TryParse(productModel.CreatedBy, out var ownerId) || ownerId != currentUserId)
-            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "You do not own this product.");
+        var storeMemberModel = await _unitOfWork
+            .GetRepository<StoreMemberModel>()
+            .FindAsync(
+                x => x.UserId == currentUserId
+                    && x.StoreId == productModel.StoreId
+                    && x.Status == StoreMemberStatus.Active
+                    && x.Store.Status != StoreStatus.Deleted
+                    && x.Store.Status != StoreStatus.Suspended,
+                true,
+                cancellationToken,
+                x => x.Store);
+
+        if (storeMemberModel is null)
+            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Current user does not belong to the product store.");
+
+        if (!Guid.TryParse(productModel.CreatedBy, out var creatorUserId))
+            return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Product creator is invalid.");
+
+        var canManageProduct = creatorUserId == currentUserId || storeMemberModel.Role == StoreMemberRole.Owner;
+        if (!canManageProduct)
+            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Current user cannot delete this product.");
 
         var product = productModel.ToDomain();
         var deleteResult = product.Delete();

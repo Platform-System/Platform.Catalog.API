@@ -1,0 +1,117 @@
+using MediatR;
+using Microsoft.AspNetCore.Http;
+using Platform.Application.Abstractions.Data;
+using Platform.Application.Messaging;
+using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Products.Mappers;
+using Platform.Catalog.API.Application.Features.Products.Services;
+using Platform.Catalog.API.Domain.Enums;
+using Platform.Catalog.API.Infrastructure.Persistence.Models;
+using Platform.SystemContext.Abstractions;
+
+namespace Platform.Catalog.API.Application.Features.Products.Commands.OwnerStoreApproveProduct;
+
+public sealed class OwnerStoreApproveProductHandler : ICommandHandler<OwnerStoreApproveProductCommand>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ProductApprovalService _approvalService;
+    private readonly IUserContext _userContext;
+
+    public OwnerStoreApproveProductHandler(IUnitOfWork unitOfWork, ProductApprovalService approvalService, IUserContext userContext)
+    {
+        _unitOfWork = unitOfWork;
+        _approvalService = approvalService;
+        _userContext = userContext;
+    }
+
+    public async Task<Result<Unit>> Handle(OwnerStoreApproveProductCommand command, CancellationToken cancellationToken)
+    {
+        if (_userContext.UserId is not Guid currentActorId)
+            return Result<Unit>.Failure(StatusCodes.Status401Unauthorized, "Current user is invalid.");
+
+        var productModel = await _unitOfWork
+            .GetRepository<ProductModel>()
+            .FindAsync(
+                x => x.Id == command.ProductId,
+                false,
+                cancellationToken,
+                x => x.Store,
+                x => x.Category,
+                x => x.MediaFiles,
+                x => x.CoverImage!);
+
+        if (productModel is null || productModel.Status == ProductStatus.Deleted)
+            return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Product not found.");
+
+        if (productModel.Status == ProductStatus.Active)
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Product already approved.");
+
+        if (!Guid.TryParse(productModel.CreatedBy, out var creatorUserId))
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Product creator is invalid.");
+
+        var storeMemberRepository = _unitOfWork.GetRepository<StoreMemberModel>();
+        var product = productModel.ToDomain();
+
+        if (productModel.Status == ProductStatus.Draft)
+        {
+            var storeMember = await storeMemberRepository.FindAsync(
+                x => x.StoreId == productModel.StoreId
+                    && x.UserId == currentActorId
+                    && x.Status == StoreMemberStatus.Active,
+                true,
+                cancellationToken);
+
+            if (storeMember is null)
+                return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Current user does not belong to this store.");
+
+            if (creatorUserId != currentActorId)
+                return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Only the product creator can submit this product.");
+
+            if (!productModel.Store.IsVerified)
+            {
+                if (storeMember.Role != StoreMemberRole.Owner)
+                    return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can submit products of unverified stores.");
+
+                var pendingAdminResult = product.MarkPendingAdminReview();
+                if (pendingAdminResult.IsFailure)
+                    return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to submit product for admin review.");
+
+                productModel.ApplyDomainState(product);
+                _unitOfWork.GetRepository<ProductModel>().Update(productModel);
+                return Result<Unit>.Success(Unit.Value);
+            }
+
+            if (storeMember.Role == StoreMemberRole.Owner || storeMember.CanPublishProductDirectly)
+                return await _approvalService.PublishActiveAsync(productModel, product, cancellationToken);
+
+            var pendingOwnerResult = product.MarkPendingOwnerReview();
+            if (pendingOwnerResult.IsFailure)
+                return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to submit product for owner review.");
+
+            productModel.ApplyDomainState(product);
+            _unitOfWork.GetRepository<ProductModel>().Update(productModel);
+            return Result<Unit>.Success(Unit.Value);
+        }
+
+        if (productModel.Status == ProductStatus.PendingOwnerReview)
+        {
+            var ownerMember = await storeMemberRepository.FindAsync(
+                x => x.StoreId == productModel.StoreId
+                    && x.UserId == currentActorId
+                    && x.Status == StoreMemberStatus.Active
+                    && x.Role == StoreMemberRole.Owner,
+                true,
+                cancellationToken);
+
+            if (ownerMember is null)
+                return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can approve this product.");
+
+            return await _approvalService.PublishActiveAsync(productModel, product, cancellationToken);
+        }
+
+        if (productModel.Status == ProductStatus.PendingAdminReview)
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Use the admin approval API for this product.");
+
+        return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Product is not ready for store owner approval.");
+    }
+}

@@ -37,17 +37,15 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
                 false,
                 cancellationToken,
                 x => x.Category,
+                x => x.Store,
                 x => x.MediaFiles,
                 x => x.CoverImage!);
 
         if (productModel is null || productModel.Status == ProductStatus.Deleted)
             return Result<ProductResponse>.Failure(StatusCodes.Status404NotFound, "Product not found.");
 
-        if(productModel.Status == ProductStatus.Active)
+        if (productModel.Status == ProductStatus.Active)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Active product cannot be updated.");
-
-        if (!Guid.TryParse(productModel.CreatedBy, out var ownerId) || ownerId != currentUserId)
-            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "You do not own this product.");
 
         var categoryModel = await _unitOfWork
             .GetRepository<CategoryModel>()
@@ -55,6 +53,28 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
 
         if (categoryModel is null)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Category is invalid.");
+
+        var storeMemberModel = await _unitOfWork
+            .GetRepository<StoreMemberModel>()
+            .FindAsync(
+                x => x.UserId == currentUserId
+                    && x.StoreId == productModel.StoreId
+                    && x.Status == StoreMemberStatus.Active
+                    && x.Store.Status != StoreStatus.Deleted
+                    && x.Store.Status != StoreStatus.Suspended,
+                true,
+                cancellationToken,
+                x => x.Store);
+
+        if (storeMemberModel is null)
+            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Current user does not belong to the product store.");
+
+        if (!Guid.TryParse(productModel.CreatedBy, out var creatorUserId))
+            return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Product creator is invalid.");
+
+        var canManageProduct = creatorUserId == currentUserId || storeMemberModel.Role == StoreMemberRole.Owner;
+        if (!canManageProduct)
+            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Current user cannot update this product.");
 
         var product = productModel.ToDomain();
         var category = categoryModel.ToDomain();
