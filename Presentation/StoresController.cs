@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.StoreMembers.Commands.AcceptInvite;
 using Platform.Catalog.API.Application.Features.StoreMembers.Commands.InviteMember;
@@ -8,6 +9,7 @@ using Platform.Catalog.API.Application.Features.Stores.Commands.ApproveVerificat
 using Platform.Catalog.API.Application.Features.Stores.Commands.Create;
 using Platform.Catalog.API.Application.Features.Stores.Commands.RequestVerification;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetBySlug;
+using Platform.Catalog.API.Application.Features.Stores.Queries.GetProductsBySlug;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetStoreByUser;
 
 namespace Platform.Catalog.API.Presentation;
@@ -35,6 +37,19 @@ public sealed class StoresController : ControllerBase
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetStoreBySlugQuery(slug), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("{slug}/products")]
+    public async Task<IActionResult> GetProductsBySlug(string slug, [FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    {
+        var query = new GetStoreProductsBySlugQuery(slug)
+        {
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
+
+        var result = await _sender.Send(query, cancellationToken);
         return result.ToActionResult();
     }
 
