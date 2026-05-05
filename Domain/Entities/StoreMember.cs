@@ -65,4 +65,13 @@ public sealed class StoreMember : Entity
         Status = StoreMemberStatus.Active;
         return DomainResult.Success();
     }
+
+    public DomainResult UpdatePublishPermission(bool canPublishProductDirectly)
+    {
+        if (Role == StoreMemberRole.Owner || Status != StoreMemberStatus.Active)
+            return DomainResult.Failure(DomainErrors.Validation.InvalidInput);
+
+        CanPublishProductDirectly = canPublishProductDirectly;
+        return DomainResult.Success();
+    }
 }

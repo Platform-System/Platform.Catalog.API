@@ -5,6 +5,7 @@ using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.StoreMembers.Commands.AcceptInvite;
 using Platform.Catalog.API.Application.Features.StoreMembers.Commands.InviteMember;
+using Platform.Catalog.API.Application.Features.StoreMembers.Commands.UpdatePublishPermission;
 using Platform.Catalog.API.Application.Features.Stores.Commands.ApproveVerification;
 using Platform.Catalog.API.Application.Features.Stores.Commands.Create;
 using Platform.Catalog.API.Application.Features.Stores.Commands.RequestVerification;
@@ -107,6 +108,13 @@ public sealed class StoresController : ControllerBase
     public async Task<IActionResult> AcceptInvite(Guid storeId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new AcceptStoreInviteCommand(storeId), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPut("current/members/{userId:guid}/publish-permission")]
+    public async Task<IActionResult> UpdatePublishPermission(Guid userId, [FromBody] UpdatePublishPermissionRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new UpdatePublishPermissionCommand(userId, request), cancellationToken);
         return result.ToActionResult();
     }
 }
