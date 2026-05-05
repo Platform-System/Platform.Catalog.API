@@ -8,6 +8,7 @@ using Platform.Catalog.API.Application.Features.StoreMembers.Commands.InviteMemb
 using Platform.Catalog.API.Application.Features.Stores.Commands.ApproveVerification;
 using Platform.Catalog.API.Application.Features.Stores.Commands.Create;
 using Platform.Catalog.API.Application.Features.Stores.Commands.RequestVerification;
+using Platform.Catalog.API.Application.Features.Stores.Commands.Update;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetBySlug;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetProductsBySlug;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetStoreByUser;
@@ -57,6 +58,13 @@ public sealed class StoresController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateStoreRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new CreateStoreCommand(request), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPut("current")]
+    public async Task<IActionResult> UpdateCurrentStore([FromBody] UpdateStoreRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new UpdateStoreCommand(request), cancellationToken);
         return result.ToActionResult();
     }
 

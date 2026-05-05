@@ -92,4 +92,27 @@ public sealed class Store : AggregateRoot
         Status = StoreStatus.Active;
         return DomainResult.Success();
     }
+
+    public DomainResult UpdateInfo(string name, string slug, string? description, string? tagline, string? location, string? responseTime, string? avatarUrl, string? coverImageUrl, string? shippingPolicy, string? returnPolicy, string? warrantyPolicy)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return DomainResult.Failure(DomainErrors.Validation.Required(nameof(Name)));
+
+        if (string.IsNullOrWhiteSpace(slug))
+            return DomainResult.Failure(DomainErrors.Validation.Required(nameof(Slug)));
+
+        Name = name.Trim();
+        Slug = slug.Trim();
+        Description = description?.Trim();
+        Tagline = tagline?.Trim();
+        Location = location?.Trim();
+        ResponseTime = responseTime?.Trim();
+        AvatarUrl = avatarUrl?.Trim();
+        CoverImageUrl = coverImageUrl?.Trim();
+        ShippingPolicy = shippingPolicy?.Trim();
+        ReturnPolicy = returnPolicy?.Trim();
+        WarrantyPolicy = warrantyPolicy?.Trim();
+
+        return DomainResult.Success();
+    }
 }

@@ -2,7 +2,7 @@ using MediatR;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
-using Platform.Catalog.API.Domain.Entities;
+using Platform.Catalog.API.Application.Features.Stores.Mappers;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.SystemContext.Abstractions;
 
@@ -31,29 +31,12 @@ public sealed class ApproveStoreVerificationHandler : ICommandHandler<ApproveSto
         if (storeModel is null)
             return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Store not found.");
 
-        var store = Store.Load(
-            storeModel.Id,
-            storeModel.Name,
-            storeModel.Slug,
-            storeModel.Description,
-            storeModel.Tagline,
-            storeModel.Location,
-            storeModel.ResponseTime,
-            storeModel.AvatarUrl,
-            storeModel.CoverImageUrl,
-            storeModel.IsVerified,
-            storeModel.Status,
-            storeModel.ShippingPolicy,
-            storeModel.ReturnPolicy,
-            storeModel.WarrantyPolicy);
-
+        var store = storeModel.ToDomain();
         var approveResult = store.ApproveVerification();
         if (approveResult.IsFailure)
             return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to approve store verification.");
 
-        storeModel.IsVerified = store.IsVerified;
-        storeModel.Status = store.Status;
-
+        storeModel.ApplyDomainState(store);
         return Result<Unit>.Success(Unit.Value);
     }
 }

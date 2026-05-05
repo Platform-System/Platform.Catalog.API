@@ -3,8 +3,8 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.StoreMembers.Mappers;
 using Platform.Catalog.API.Domain.Enums;
-using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Application.Features.StoreMembers.Commands.AcceptInvite;
@@ -39,20 +39,12 @@ public sealed class AcceptStoreInviteHandler : ICommandHandler<AcceptStoreInvite
         if (storeMemberModel is null)
             return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Invitation not found.");
 
-        var member = StoreMember.Load(
-            storeMemberModel.Id,
-            storeMemberModel.StoreId,
-            storeMemberModel.UserId,
-            storeMemberModel.Role,
-            storeMemberModel.Status,
-            storeMemberModel.CanPublishProductDirectly,
-            storeMemberModel.JoinedAt);
-
+        var member = storeMemberModel.ToDomain();
         var acceptResult = member.AcceptInvite();
         if (acceptResult.IsFailure)
             return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Invitation cannot be accepted.");
 
-        storeMemberModel.Status = member.Status;
+        storeMemberModel.ApplyDomainState(member);
         storeMemberRepository.Update(storeMemberModel);
 
         return Result<Unit>.Success(Unit.Value);
