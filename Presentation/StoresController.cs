@@ -10,6 +10,7 @@ using Platform.Catalog.API.Application.Features.Stores.Commands.Create;
 using Platform.Catalog.API.Application.Features.Stores.Commands.RequestVerification;
 using Platform.Catalog.API.Application.Features.Stores.Commands.Update;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetBySlug;
+using Platform.Catalog.API.Application.Features.Stores.Queries.GetPendingOwnerReview;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetProductsBySlug;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetStoreByUser;
 
@@ -31,6 +32,19 @@ public sealed class StoresController : ControllerBase
     public async Task<IActionResult> GetCurrentStore(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetStoreByUserQuery(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("current/pending-owner-review")]
+    public async Task<IActionResult> GetPendingOwnerReview([FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    {
+        var query = new GetPendingOwnerReviewQuery
+        {
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
+
+        var result = await _sender.Send(query, cancellationToken);
         return result.ToActionResult();
     }
 
