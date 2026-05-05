@@ -21,11 +21,13 @@ public class ProductModel : Entity
     public long Price { get; set; }
     public int Stock { get; set; }
     public Guid CategoryId { get; set; }
+    public Guid StoreId { get; set; }
     public ProductStatus Status { get; set; }
     public DateTime? PublishedAt { get; set; }
     public JsonDocument? AdditionalInfo { get; set; }
 
     public CategoryModel Category { get; set; } = null!;
+    public StoreModel Store { get; set; } = null!;
     public List<ProductMediaModel> MediaFiles { get; set; } = new();
     public ProductCoverImageModel? CoverImage { get; set; }
 }

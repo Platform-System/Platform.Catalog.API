@@ -15,6 +15,7 @@ namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
             builder.Property(x => x.Price).IsRequired();
             builder.Property(x => x.Stock).IsRequired();
             builder.Property(x => x.CategoryId).IsRequired();
+            builder.Property(x => x.StoreId).IsRequired();
 
             builder.Property(x => x.AdditionalInfo)
                 .HasColumnType("jsonb");
@@ -22,6 +23,11 @@ namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
             builder.HasOne(x => x.Category)
                 .WithMany(x => x.Products)
                 .HasForeignKey(x => x.CategoryId);
+
+            builder.HasOne(x => x.Store)
+                .WithMany(x => x.Products)
+                .HasForeignKey(x => x.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(x => x.MediaFiles)
                 .WithOne(x => x.Product)

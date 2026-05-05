@@ -9,6 +9,8 @@ namespace Platform.Catalog.API.Domain.Enums
     public enum ProductStatus
     {
         Draft,
+        PendingOwnerReview,
+        PendingAdminReview,
         Active,
         Inactive,
         Deleted
@@ -18,6 +20,29 @@ namespace Platform.Catalog.API.Domain.Enums
     {
         Active,
         Deleted
+    }
+
+    public enum StoreStatus
+    {
+        Draft,
+        PendingVerification,
+        Active,
+        Suspended,
+        Deleted
+    }
+
+    public enum StoreMemberRole
+    {
+        Owner,
+        Manager,
+        Staff
+    }
+
+    public enum StoreMemberStatus
+    {
+        Active,
+        Invited,
+        Removed
     }
 
     public enum MediaType

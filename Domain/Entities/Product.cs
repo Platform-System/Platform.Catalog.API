@@ -14,6 +14,7 @@ namespace Platform.Catalog.API.Domain.Entities
         public string Author { get; protected set; } = null!;
         public long Price { get; protected set; }
         public int Stock { get; private set; }
+        public Guid StoreId { get; protected set; }
         public ProductStatus Status { get; protected set; }
         public DateTime? PublishedAt { get; protected set; }
         public JsonDocument? AdditionalInfo { get; protected set; }
@@ -26,13 +27,16 @@ namespace Platform.Catalog.API.Domain.Entities
 
         protected Product() { }
 
-        public static DomainResult<Product> Create(string title, string author, long price, Category category, int stock)
+        public static DomainResult<Product> Create(string title, string author, long price, Guid storeId, Category category, int stock)
         {
             if (category is null)
                 return DomainResult<Product>.Failure(ProductErrors.InvalidType);
 
+            if (storeId == Guid.Empty)
+                return DomainResult<Product>.Failure(DomainErrors.Validation.InvalidInput);
+
             var product = new Product();
-            var initializeResult = product.Initialize(title, author, price, category);
+            var initializeResult = product.Initialize(title, author, price, storeId, category);
             if (initializeResult.IsFailure)
                 return DomainResult<Product>.Failure(initializeResult.Error);
 
@@ -43,15 +47,19 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult<Product>.Success(product);
         }
 
-        protected DomainResult Initialize(string title, string author, long price, Category category)
+        protected DomainResult Initialize(string title, string author, long price, Guid storeId, Category category)
         {
             if (category is null)
                 return DomainResult.Failure(ProductErrors.InvalidType);
+
+            if (storeId == Guid.Empty)
+                return DomainResult.Failure(DomainErrors.Validation.InvalidInput);
 
             var infoResult = SetInfo(title, author, price);
             if (infoResult.IsFailure)
                 return infoResult;
 
+            StoreId = storeId;
             SetCategory(category);
 
             return DomainResult.Success();
@@ -194,54 +202,41 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult.Success();
         }
 
+        public DomainResult MarkPendingOwnerReview()
+        {
+            if (Status == ProductStatus.Deleted) return DomainResult.Failure(ProductErrors.AlreadyDeleted);
+            Status = ProductStatus.PendingOwnerReview;
+            return DomainResult.Success();
+        }
+
+        public DomainResult MarkPendingAdminReview()
+        {
+            if (Status == ProductStatus.Deleted) return DomainResult.Failure(ProductErrors.AlreadyDeleted);
+            Status = ProductStatus.PendingAdminReview;
+            return DomainResult.Success();
+        }
+
         public void SetDraft() => Status = ProductStatus.Draft;
 
-        public static Product Load(ProductLoadData loadData, int stock)
+        public static Product Load(Guid id, string title, string author, long price, Guid storeId, ProductStatus status, DateTime? publishedAt, BlobMetadata? blobMetadata, int stock, DateTime createdAt, string? createdBy, DateTime? updatedAt, string? updatedBy, bool isSoftDeleted, DateTime? deletedAt, string? deletedBy)
         {
             var product = new Product
             {
                 Stock = stock
             };
 
-            product.LoadState(
-                loadData.Id,
-                loadData.Title,
-                loadData.Author,
-                loadData.Price,
-                loadData.Status,
-                loadData.PublishedAt,
-                loadData.BlobMetadata,
-                loadData.CreatedAt,
-                loadData.CreatedBy,
-                loadData.UpdatedAt,
-                loadData.UpdatedBy,
-                loadData.IsSoftDeleted,
-                loadData.DeletedAt,
-                loadData.DeletedBy);
+            product.LoadState(id, title, author, price, storeId, status, publishedAt, blobMetadata, createdAt, createdBy, updatedAt, updatedBy, isSoftDeleted, deletedAt, deletedBy);
 
             return product;
         }
 
-        protected void LoadState(
-            Guid id,
-            string title,
-            string author,
-            long price,
-            ProductStatus status,
-            DateTime? publishedAt,
-            BlobMetadata? blobMetadata,
-            DateTime createdAt,
-            string? createdBy,
-            DateTime? updatedAt,
-            string? updatedBy,
-            bool isSoftDeleted,
-            DateTime? deletedAt,
-            string? deletedBy)
+        protected void LoadState(Guid id, string title, string author, long price, Guid storeId, ProductStatus status, DateTime? publishedAt, BlobMetadata? blobMetadata, DateTime createdAt, string? createdBy, DateTime? updatedAt, string? updatedBy, bool isSoftDeleted, DateTime? deletedAt, string? deletedBy)
         {
             Id = id;
             Title = title;
             Author = author;
             Price = price;
+            StoreId = storeId;
             Status = status;
             PublishedAt = publishedAt;
             AdditionalInfo = null;
