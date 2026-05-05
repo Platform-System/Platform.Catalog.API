@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
+using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
-using Platform.Catalog.API.Application.Mappers;
+using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using MediatR;
@@ -25,33 +25,35 @@ public sealed class ApproveProductHandler : ICommandHandler<ApproveProductComman
     {
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
-            .GetQueryable()
-            .Include(x => x.Category)
-            .Include(x => x.MediaFiles)
-            .Include(x => x.CoverImage)
-            .FirstOrDefaultAsync(x => x.Id == command.ProductId, cancellationToken);
+            .FindAsync(
+                x => x.Id == command.ProductId,
+                false,
+                cancellationToken,
+                x => x.Category,
+                x => x.MediaFiles,
+                x => x.CoverImage!);
 
         if (productModel is null || productModel.Status == ProductStatus.Deleted)
-            return Result<Unit>.Failure("Product not found");
+            return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Product not found");
 
         if (productModel.Status == ProductStatus.Active)
-            return Result<Unit>.Failure("Product already approved");
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Product already approved");
 
         var product = productModel.ToDomain();
         var blob = product.GetBlob();
 
         if (blob is null)
-            return Result<Unit>.Failure("Blob not found");
+            return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Blob not found");
 
         var publicUrl = await _blobService.MakePublicAndGetUrl(blob.ContainerName, blob.BlobName);
 
         var publishResult = product.PublishBlob(publicUrl);
         if (publishResult.IsFailure)
-            return Result<Unit>.Failure("Unable to publish product blob.");
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to publish product blob.");
 
         var activateResult = product.Activate();
         if (activateResult.IsFailure)
-            return Result<Unit>.Failure("Unable to approve product.");
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to approve product.");
 
         if (product.CoverImage is not null)
         {

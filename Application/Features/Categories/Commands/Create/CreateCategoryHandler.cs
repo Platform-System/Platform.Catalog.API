@@ -1,6 +1,8 @@
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
+using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Application.Features.Categories.Shared;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
@@ -20,13 +22,13 @@ public sealed class CreateCategoryHandler : ICommandHandler<CreateCategoryComman
     {
         var createResult = Category.Create(command.Request.Name);
         if (createResult.IsFailure)
-            return Result<CategoryResponse>.Failure("Unable to create category.");
+            return Result<CategoryResponse>.Failure(StatusCodes.Status400BadRequest, "Unable to create category.");
 
         var category = createResult.Value;
         var categoryModel = category.ToPersistence();
 
         await _unitOfWork.GetRepository<CategoryModel>().AddAsync(categoryModel, cancellationToken);
 
-        return Result<CategoryResponse>.Success(categoryModel.ToResponse());
+        return Result<CategoryResponse>.Success(category.ToResponse());
     }
 }

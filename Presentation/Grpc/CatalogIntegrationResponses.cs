@@ -17,6 +17,12 @@ public static class CatalogIntegrationResponses
             Status = ResponseStatusExtensions.Failure(errorMessage)
         };
 
+    public static AdjustStockResponse SuccessAdjustStock()
+        => new()
+        {
+            Status = ResponseStatusExtensions.Success()
+        };
+
     public static AuthorizeProductCoverUploadResponse FailureAuthorizeProductCoverUpload(string errorMessage)
         => new()
         {

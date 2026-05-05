@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Application.Features.Categories.Shared;
-using Platform.Catalog.API.Application.Mappers;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -22,22 +22,22 @@ public sealed class UpdateCategoryHandler : ICommandHandler<UpdateCategoryComman
     {
         var categoryModel = await _unitOfWork
             .GetRepository<CategoryModel>()
-            .GetQueryable()
-            .FirstOrDefaultAsync(
+            .FindAsync(
                 x => x.Id == command.CategoryId && x.Status == CategoryStatus.Active,
+                false,
                 cancellationToken);
 
         if (categoryModel is null)
-            return Result<CategoryResponse>.Failure("Category not found.");
+            return Result<CategoryResponse>.Failure(StatusCodes.Status404NotFound, "Category not found.");
 
         var category = categoryModel.ToDomain();
         var updateResult = category.UpdateName(command.Request.Name);
         if (updateResult.IsFailure)
-            return Result<CategoryResponse>.Failure("Unable to update category.");
+            return Result<CategoryResponse>.Failure(StatusCodes.Status400BadRequest, "Unable to update category.");
 
         categoryModel.ApplyDomainState(category);
         _unitOfWork.GetRepository<CategoryModel>().Update(categoryModel);
 
-        return Result<CategoryResponse>.Success(categoryModel.ToResponse());
+        return Result<CategoryResponse>.Success(category.ToResponse());
     }
 }

@@ -1,20 +1,13 @@
 using Platform.BuildingBlocks.Extensions;
+using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.ValueObjects;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-namespace Platform.Catalog.API.Application.Mappers;
+namespace Platform.Catalog.API.Application.Features.Products.Mappers;
 
-public static class PersistenceMapper
+public static class ProductPersistenceMapper
 {
-    // Ghi nhớ nhanh:
-    // - ToDomain: ProductModel -> Product domain để xử lý nghiệp vụ
-    // - ApplyDomainState: Product domain -> ProductModel cũ để cập nhật state rồi SaveChanges
-    // - ToPersistence: Product domain -> ProductModel mới để Add vào database
-
-    // Hàm này dùng khi cần tạo persistence model từ aggregate domain Product.
-    // Mục đích là biến object domain đang xử lý trong business thành object EF model
-    // để có thể Add vào DbContext và lưu xuống database.
     public static ProductModel ToPersistence(this Product product, CategoryModel category)
     {
         return new ProductModel(product.Id)
@@ -31,10 +24,6 @@ public static class PersistenceMapper
         };
     }
 
-    // Hàm này dùng khi domain đã xử lý nghiệp vụ xong và mình muốn cập nhật ngược
-    // state mới từ domain về persistence model đang được EF tracking.
-    // Ví dụ: domain ReduceStock thành công thì hàm này sẽ copy Stock mới về model
-    // để SaveChanges có thể lưu đúng dữ liệu xuống database.
     public static void ApplyDomainState(this ProductModel model, Product product, CategoryModel? category = null)
     {
         model.Title = product.Title;
@@ -52,24 +41,17 @@ public static class PersistenceMapper
         }
     }
 
-    // Hàm này dùng để dựng aggregate domain Product từ dữ liệu persistence model.
-    // Mục đích là đưa dữ liệu từ database về đúng domain object để tất cả business rule
-    // như ReduceStock, Restock, Update... đều chạy qua domain thay vì sửa model trực tiếp.
     public static Product ToDomain(this ProductModel model)
     {
         var loadData = model.ToLoadData();
         var domain = Product.Load(loadData, model.Stock);
 
-        // Nạp thêm các dữ liệu liên quan để aggregate domain có trạng thái đầy đủ.
         domain.LoadCategory(model.Category.ToDomain());
         domain.LoadMediaFiles(model.MediaFiles.Select(ToDomain));
-        domain.LoadCoverImage(model.CoverImage is null ? null : ToDomain(model.CoverImage));
+        domain.LoadCoverImage(model.CoverImage is null ? null : model.CoverImage.ToDomain());
 
         return domain;
     }
-
-    public static Category ToDomain(this CategoryModel model)
-        => Category.Load(model.Id, model.Name, model.Status);
 
     public static ProductMedia ToDomain(this ProductMediaModel model)
         => ProductMedia.Load(model.Id, model.ProductId, model.BlobName, model.ContainerName, model.FileName, model.ContentType, model.Size, model.Type, model.SortOrder, model.AltText, model.Url);
@@ -135,9 +117,6 @@ public static class PersistenceMapper
         model.SortOrder = media.SortOrder;
     }
 
-    // Hàm phụ để gom dữ liệu chung của ProductModel thành ProductLoadData.
-    // Sau đó ProductLoadData sẽ được truyền vào Product.Load
-    // để khởi tạo lại aggregate domain từ dữ liệu đã lưu trong database.
     private static ProductLoadData ToLoadData(this ProductModel model)
     {
         return new ProductLoadData(

@@ -1,8 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
+using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
@@ -24,17 +25,16 @@ public sealed class GetProductByIdHandler : IQueryHandler<GetProductByIdQuery, P
     {
         var product = await _unitOfWork
             .GetRepository<ProductModel>()
-            .GetQueryable()
-            .AsNoTracking()
-            .Include(x => x.Category)
-            .Include(x => x.CoverImage)
-            .FirstOrDefaultAsync(
+            .FindAsync(
                 x => x.Id == query.ProductId && x.Status == ProductStatus.Active,
-                cancellationToken);
+                true,
+                cancellationToken,
+                x => x.Category,
+                x => x.CoverImage!);
 
         if (product is null)
         {
-            return Result<ProductResponse>.Failure("Product not found.");
+            return Result<ProductResponse>.Failure(StatusCodes.Status404NotFound, "Product not found.");
         }
 
         return Result<ProductResponse>.Success(product.ToResponse(product.ResolveCoverImageUrl(_blobService)));

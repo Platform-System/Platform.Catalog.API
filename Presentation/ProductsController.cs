@@ -45,17 +45,6 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> GetById(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetProductByIdQuery(productId), cancellationToken);
-
-        if (!result.IsSuccess && result.Errors.Any(error => error.Contains("not found", StringComparison.OrdinalIgnoreCase)))
-        {
-            return NotFound(new
-            {
-                Success = false,
-                Data = result.Value,
-                Errors = result.Errors
-            });
-        }
-
         return result.ToActionResult();
     }
 

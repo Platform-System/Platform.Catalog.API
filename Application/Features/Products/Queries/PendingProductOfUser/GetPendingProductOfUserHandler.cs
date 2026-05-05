@@ -1,9 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
+using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
@@ -26,30 +27,23 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
     public async Task<Result<PagedResult<ProductResponse>>> Handle(GetPendingProductOfUserQuery query, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(_currentUserProvider.CurrentUserId, out var currentUserId))
-            return Result<PagedResult<ProductResponse>>.Failure("Current user is invalid.");
+            return Result<PagedResult<ProductResponse>>.Failure(StatusCodes.Status401Unauthorized, "Current user is invalid.");
 
         var userId = currentUserId.ToString();
 
-        IQueryable<ProductModel> productQuery = _unitOfWork
+        var products = await _unitOfWork
             .GetRepository<ProductModel>()
-            .GetQueryable()
-            .AsNoTracking()
-            .Include(x => x.Category)
-            .Include(x => x.CoverImage)
-            .Where(x => x.CreatedBy == userId && x.Status == ProductStatus.Draft);
+            .GetPagedAsync(
+                query.Page,
+                query.PageSize,
+                x => x.CreatedBy == userId && x.Status == ProductStatus.Draft,
+                x => x.CreatedAt,
+                true,
+                cancellationToken,
+                x => x.Category,
+                x => x.CoverImage!);
 
-        var totalCount = await productQuery.CountAsync(cancellationToken);
-
-        if (totalCount == 0)
-            return Result<PagedResult<ProductResponse>>.Failure("No pending products found for the user.");
-
-        var productModels = await productQuery
-            .OrderByDescending(x => x.CreatedAt)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync(cancellationToken);
-
-        var items = productModels
+        var items = products.Items
             .Select(x => x.ToResponse(x.ResolveCoverImageUrl(_blobService)))
             .ToList();
 
@@ -58,7 +52,7 @@ public sealed class GetPendingProductOfUserHandler : IQueryHandler<GetPendingPro
             Items = items,
             Page = query.Page,
             PageSize = query.PageSize,
-            TotalCount = totalCount
+            TotalCount = products.TotalCount
         };
 
         return Result<PagedResult<ProductResponse>>.Success(pagedResult);

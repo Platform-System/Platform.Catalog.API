@@ -1,10 +1,10 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Application.Features.Categories.Shared;
-using Platform.Catalog.API.Application.Mappers;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Application.Features.Categories.Commands.Delete;
@@ -22,17 +22,19 @@ public sealed class DeleteCategoryHandler : ICommandHandler<DeleteCategoryComman
     {
         var categoryModel = await _unitOfWork
             .GetRepository<CategoryModel>()
-            .GetQueryable()
-            .Include(x => x.Products)
-            .FirstOrDefaultAsync(x => x.Id == command.CategoryId, cancellationToken);
+            .FindAsync(
+                x => x.Id == command.CategoryId,
+                false,
+                cancellationToken,
+                x => x.Products);
 
         if (categoryModel is null)
-            return Result<Unit>.Failure("Category not found.");
+            return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Category not found.");
 
         var category = categoryModel.ToDomain();
         var deleteResult = category.Delete();
         if (deleteResult.IsFailure)
-            return Result<Unit>.Failure("Unable to delete category.");
+            return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to delete category.");
 
         categoryModel.ApplyDomainState(category);
         _unitOfWork.GetRepository<CategoryModel>().Update(categoryModel);

@@ -1,8 +1,9 @@
+using Platform.Catalog.API.Application.Features.ProductMedias.Shared;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-namespace Platform.Catalog.API.Application.Features.ProductMedias.Shared;
+namespace Platform.Catalog.API.Application.Features.ProductMedias.Mappers;
 
-public static class ProductMediaMapper
+public static class ProductMediaResponseMapper
 {
     public static ProductMediaResponse ToResponse(this ProductMediaModel media, string? resolvedUrl)
     {

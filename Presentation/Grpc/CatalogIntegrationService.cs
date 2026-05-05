@@ -1,7 +1,6 @@
 using Grpc.Core;
-using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Data;
-using Platform.Catalog.API.Application.Mappers;
+using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
@@ -73,10 +72,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
 
-        return new AdjustStockResponse
-        {
-            Status = ResponseStatusExtensions.Success()
-        };
+        return CatalogIntegrationResponses.SuccessAdjustStock();
     }
 
     public override async Task<AdjustStockResponse> RestoreStock(AdjustStockRequest request, ServerCallContext context)
@@ -106,10 +102,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
 
-        return new AdjustStockResponse
-        {
-            Status = ResponseStatusExtensions.Success()
-        };
+        return CatalogIntegrationResponses.SuccessAdjustStock();
     }
 
     public override async Task<AuthorizeProductCoverUploadResponse> AuthorizeProductCoverUpload(
@@ -177,11 +170,13 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
-            .GetQueryable()
-            .Include(x => x.Category)
-            .Include(x => x.MediaFiles)
-            .Include(x => x.CoverImage)
-            .FirstOrDefaultAsync(x => x.Id == productId, context.CancellationToken);
+            .FindAsync(
+                x => x.Id == productId,
+                false,
+                context.CancellationToken,
+                x => x.Category,
+                x => x.MediaFiles,
+                x => x.CoverImage!);
 
         if (productModel is null || productModel.Status == ProductStatus.Deleted)
             return CatalogIntegrationResponses.FailureSetProductCover("Product not found.");
@@ -227,9 +222,11 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
         var productModel = await _unitOfWork
             .GetRepository<ProductModel>()
-            .GetQueryable()
-            .Include(x => x.MediaFiles)
-            .FirstOrDefaultAsync(x => x.Id == productId, context.CancellationToken);
+            .FindAsync(
+                x => x.Id == productId,
+                false,
+                context.CancellationToken,
+                x => x.MediaFiles);
 
         if (productModel is null || productModel.Status == ProductStatus.Deleted)
             return CatalogIntegrationResponses.FailureSetProductMedias("Product not found.");

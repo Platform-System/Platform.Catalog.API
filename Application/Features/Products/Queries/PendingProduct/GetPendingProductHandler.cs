@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
@@ -22,26 +22,19 @@ public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQu
 
     public async Task<Result<PagedResult<ProductResponse>>> Handle(GetPendingProductQuery query, CancellationToken cancellationToken)
     {
-        IQueryable<ProductModel> productQuery = _unitOfWork
+        var products = await _unitOfWork
             .GetRepository<ProductModel>()
-            .GetQueryable()
-            .AsNoTracking()
-            .Include(x => x.Category)
-            .Include(x => x.CoverImage)
-            .Where(x => x.Status == ProductStatus.Draft);
+            .GetPagedAsync(
+                query.Page,
+                query.PageSize,
+                x => x.Status == ProductStatus.Draft,
+                x => x.CreatedAt,
+                true,
+                cancellationToken,
+                x => x.Category,
+                x => x.CoverImage!);
 
-        var totalCount = await productQuery.CountAsync(cancellationToken);
-
-        if (totalCount == 0)
-            return Result<PagedResult<ProductResponse>>.Failure("No pending products found.");
-
-        var productModels = await productQuery
-            .OrderByDescending(x => x.CreatedAt)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync(cancellationToken);
-
-        var items = productModels
+        var items = products.Items
             .Select(x => x.ToResponse(x.ResolveCoverImageUrl(_blobService)))
             .ToList();
 
@@ -50,7 +43,7 @@ public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQu
             Items = items,
             Page = query.Page,
             PageSize = query.PageSize,
-            TotalCount = totalCount
+            TotalCount = products.TotalCount
         };
 
         return Result<PagedResult<ProductResponse>>.Success(pagedResult);

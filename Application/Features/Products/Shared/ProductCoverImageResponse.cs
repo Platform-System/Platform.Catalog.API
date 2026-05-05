@@ -1,5 +1,3 @@
-using Platform.Catalog.API.Infrastructure.Persistence.Models;
-
 namespace Platform.Catalog.API.Application.Features.Products.Shared;
 
 public sealed class ProductCoverImageResponse
@@ -11,18 +9,4 @@ public sealed class ProductCoverImageResponse
     public long Size { get; init; }
     public string? AltText { get; init; }
     public string? Url { get; init; }
-
-    public static ProductCoverImageResponse FromModel(ProductCoverImageModel coverImage)
-    {
-        return new ProductCoverImageResponse
-        {
-            BlobName = coverImage.BlobName,
-            ContainerName = coverImage.ContainerName,
-            FileName = coverImage.FileName,
-            ContentType = coverImage.ContentType,
-            Size = coverImage.Size,
-            AltText = coverImage.AltText,
-            Url = coverImage.Url
-        };
-    }
 }
