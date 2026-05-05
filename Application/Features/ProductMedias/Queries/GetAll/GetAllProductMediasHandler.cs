@@ -40,16 +40,7 @@ public sealed class GetAllProductMediasHandler : IQueryHandler<GetAllProductMedi
                 false,
                 cancellationToken);
 
-        var items = productMedias.Items.Select(media =>
-        {
-            var resolvedUrl = string.IsNullOrWhiteSpace(media.Url)
-                ? (!string.IsNullOrWhiteSpace(media.ContainerName) && !string.IsNullOrWhiteSpace(media.BlobName)
-                    ? _blobService.GenerateReadSasUrl(media.ContainerName, media.BlobName)
-                    : null)
-                : media.Url;
-
-            return media.ToResponse(resolvedUrl);
-        }).ToList();
+        var items = productMedias.Items.Select(media => media.ToResponse(media.ResolveUrl(_blobService))).ToList();
 
         var pagedResult = new PagedResult<ProductMediaResponse>
         {

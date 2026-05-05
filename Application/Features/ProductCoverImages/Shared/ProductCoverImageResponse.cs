@@ -1,4 +1,4 @@
-namespace Platform.Catalog.API.Application.Features.Products.Shared;
+namespace Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 
 public sealed class ProductCoverImageResponse
 {

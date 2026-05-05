@@ -1,3 +1,5 @@
+using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
+
 namespace Platform.Catalog.API.Application.Features.Products.Shared;
 
 public sealed class ProductResponse

@@ -1,8 +1,8 @@
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
-using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;

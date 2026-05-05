@@ -1,7 +1,7 @@
 using Platform.Application.Abstractions.Storage;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-namespace Platform.Catalog.API.Application.Features.Products.Shared;
+namespace Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 
 public static class ProductCoverImageUrlResolver
 {
