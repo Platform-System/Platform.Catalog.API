@@ -7,6 +7,7 @@ using Platform.Catalog.API.Application.Features.StoreMembers.Commands.InviteMemb
 using Platform.Catalog.API.Application.Features.Stores.Commands.ApproveVerification;
 using Platform.Catalog.API.Application.Features.Stores.Commands.Create;
 using Platform.Catalog.API.Application.Features.Stores.Commands.RequestVerification;
+using Platform.Catalog.API.Application.Features.Stores.Queries.GetBySlug;
 using Platform.Catalog.API.Application.Features.Stores.Queries.GetStoreByUser;
 
 namespace Platform.Catalog.API.Presentation;
@@ -27,6 +28,13 @@ public sealed class StoresController : ControllerBase
     public async Task<IActionResult> GetCurrentStore(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetStoreByUserQuery(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("{slug}")]
+    public async Task<IActionResult> GetBySlug(string slug, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetStoreBySlugQuery(slug), cancellationToken);
         return result.ToActionResult();
     }
 
