@@ -4,11 +4,11 @@ using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Abstractions.Stores;
 using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
-using Platform.Catalog.API.Application.Features.Stores.Services;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
