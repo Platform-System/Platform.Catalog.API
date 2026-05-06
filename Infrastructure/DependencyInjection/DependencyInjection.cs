@@ -6,7 +6,7 @@ using Platform.Catalog.API.Infrastructure.Integrations.Store;
 using Platform.Catalog.API.Infrastructure.Data;
 using Platform.Infrastructure.DependencyInjection;
 using Platform.Infrastructure.Data;
-using Platform.StoreService.Grpc;
+using Platform.Store.Grpc;
 using Platform.SystemContext.DependencyInjection;
 using StackExchange.Redis;
 

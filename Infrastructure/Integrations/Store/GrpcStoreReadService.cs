@@ -2,7 +2,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Options;
 using Platform.Catalog.API.Application.Abstractions.Stores;
 using Platform.Common.Grpc;
-using Platform.StoreService.Grpc;
+using Platform.Store.Grpc;
 
 namespace Platform.Catalog.API.Infrastructure.Integrations.Store;
 
