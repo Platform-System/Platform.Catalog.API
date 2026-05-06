@@ -27,7 +27,6 @@ public class ProductModel : Entity
     public JsonDocument? AdditionalInfo { get; set; }
 
     public CategoryModel Category { get; set; } = null!;
-    public StoreModel Store { get; set; } = null!;
     public List<ProductMediaModel> MediaFiles { get; set; } = new();
     public ProductCoverImageModel? CoverImage { get; set; }
 }

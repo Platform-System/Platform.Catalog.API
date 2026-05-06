@@ -14,8 +14,6 @@ namespace Platform.Catalog.API.Infrastructure.Data
         }
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
-        public DbSet<StoreModel> Stores { get; set; }
-        public DbSet<StoreMemberModel> StoreMembers { get; set; }
         public DbSet<ProductMediaModel> ProductMedias { get; set; }
         public DbSet<ProductCoverImageModel> ProductCoverImages { get; set; }
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

@@ -24,11 +24,6 @@ namespace Platform.Catalog.API.Infrastructure.Persistence.Configurations
                 .WithMany(x => x.Products)
                 .HasForeignKey(x => x.CategoryId);
 
-            builder.HasOne(x => x.Store)
-                .WithMany(x => x.Products)
-                .HasForeignKey(x => x.StoreId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             builder.HasMany(x => x.MediaFiles)
                 .WithOne(x => x.Product)
                 .HasForeignKey(x => x.ProductId);

@@ -3,7 +3,7 @@ using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 
-namespace Platform.Catalog.API.Application.Features.Stores.Queries.GetPendingOwnerReview;
+namespace Platform.Catalog.API.Application.Features.Products.Queries.GetPendingOwnerReview;
 
 public sealed class GetPendingOwnerReviewQuery : PagingRequest, IQuery<PagedResult<ProductResponse>>
 {

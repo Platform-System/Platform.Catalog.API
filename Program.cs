@@ -20,6 +20,5 @@ app.UsePlatformAuthentication();
 
 app.MapControllers();
 app.MapGrpcService<CatalogIntegrationService>();
-app.MapGrpcService<StoreIntegrationService>();
 
 app.Run();

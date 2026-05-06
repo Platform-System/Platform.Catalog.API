@@ -2,37 +2,32 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Abstractions.Stores;
 using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-namespace Platform.Catalog.API.Application.Features.Stores.Queries.GetProductsBySlug;
+namespace Platform.Catalog.API.Application.Features.Products.Queries.GetProductsByStoreSlug;
 
-public sealed class GetStoreProductsBySlugHandler : IQueryHandler<GetStoreProductsBySlugQuery, PagedResult<ProductResponse>>
+public sealed class GetProductsByStoreSlugHandler : IQueryHandler<GetProductsByStoreSlugQuery, PagedResult<ProductResponse>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBlobService _blobService;
+    private readonly IStoreReadService _storeReadService;
 
-    public GetStoreProductsBySlugHandler(IUnitOfWork unitOfWork, IBlobService blobService)
+    public GetProductsByStoreSlugHandler(IUnitOfWork unitOfWork, IBlobService blobService, IStoreReadService storeReadService)
     {
         _unitOfWork = unitOfWork;
         _blobService = blobService;
+        _storeReadService = storeReadService;
     }
 
-    public async Task<Result<PagedResult<ProductResponse>>> Handle(GetStoreProductsBySlugQuery query, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<ProductResponse>>> Handle(GetProductsByStoreSlugQuery query, CancellationToken cancellationToken)
     {
-        var slug = query.Slug.Trim();
-        var store = await _unitOfWork
-            .GetRepository<StoreModel>()
-            .FindAsync(
-                x => x.Slug == slug
-                    && x.Status != StoreStatus.Deleted,
-                true,
-                cancellationToken);
-
-        if (store is null)
+        var storeId = await _storeReadService.GetStoreIdBySlugAsync(query.Slug, cancellationToken);
+        if (storeId is null)
             return Result<PagedResult<ProductResponse>>.Failure(StatusCodes.Status404NotFound, "Store not found.");
 
         var products = await _unitOfWork
@@ -40,7 +35,7 @@ public sealed class GetStoreProductsBySlugHandler : IQueryHandler<GetStoreProduc
             .GetPagedAsync(
                 query.Page,
                 query.PageSize,
-                x => x.StoreId == store.Id
+                x => x.StoreId == storeId.Value
                     && x.Status == ProductStatus.Active,
                 x => x.CreatedAt,
                 true,
@@ -48,14 +43,12 @@ public sealed class GetStoreProductsBySlugHandler : IQueryHandler<GetStoreProduc
                 x => x.Category,
                 x => x.CoverImage!);
 
-        var pagedResult = new PagedResult<ProductResponse>
+        return Result<PagedResult<ProductResponse>>.Success(new PagedResult<ProductResponse>
         {
             Items = products.Items.Select(x => x.ToResponse(x.ResolveCoverImageUrl(_blobService))).ToList(),
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = products.TotalCount
-        };
-
-        return Result<PagedResult<ProductResponse>>.Success(pagedResult);
+        });
     }
 }

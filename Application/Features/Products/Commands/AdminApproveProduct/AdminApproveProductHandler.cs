@@ -35,7 +35,6 @@ public sealed class AdminApproveProductHandler : ICommandHandler<AdminApprovePro
                 x => x.Id == command.ProductId,
                 false,
                 cancellationToken,
-                x => x.Store,
                 x => x.Category,
                 x => x.MediaFiles,
                 x => x.CoverImage!);

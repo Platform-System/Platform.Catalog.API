@@ -38,7 +38,6 @@ public sealed class OwnerStoreApproveProductHandler : ICommandHandler<OwnerStore
                 x => x.Id == command.ProductId,
                 false,
                 cancellationToken,
-                x => x.Store,
                 x => x.Category,
                 x => x.MediaFiles,
                 x => x.CoverImage!);

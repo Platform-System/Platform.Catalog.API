@@ -22,29 +22,6 @@ namespace Platform.Catalog.API.Domain.Enums
         Deleted
     }
 
-    public enum StoreStatus
-    {
-        Draft,
-        PendingVerification,
-        Active,
-        Suspended,
-        Deleted
-    }
-
-    public enum StoreMemberRole
-    {
-        Owner,
-        Manager,
-        Staff
-    }
-
-    public enum StoreMemberStatus
-    {
-        Active,
-        Invited,
-        Removed
-    }
-
     public enum MediaType
     {
         Image,

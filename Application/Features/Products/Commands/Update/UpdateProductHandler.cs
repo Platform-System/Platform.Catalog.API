@@ -41,7 +41,6 @@ public sealed class UpdateProductHandler : ICommandHandler<UpdateProductCommand,
                 false,
                 cancellationToken,
                 x => x.Category,
-                x => x.Store,
                 x => x.MediaFiles,
                 x => x.CoverImage!);
 
