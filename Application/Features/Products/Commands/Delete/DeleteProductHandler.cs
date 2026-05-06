@@ -2,10 +2,12 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
+using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
+using Platform.Catalog.API.Application.Features.Stores.Services;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
@@ -16,12 +18,14 @@ public sealed class DeleteProductHandler : ICommandHandler<DeleteProductCommand,
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IBlobService _blobService;
+    private readonly IStorePolicyService _storePolicyService;
 
-    public DeleteProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService)
+    public DeleteProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService, IStorePolicyService storePolicyService)
     {
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
         _blobService = blobService;
+        _storePolicyService = storePolicyService;
     }
 
     public async Task<Result<ProductResponse>> Handle(DeleteProductCommand command, CancellationToken cancellationToken)
@@ -42,26 +46,12 @@ public sealed class DeleteProductHandler : ICommandHandler<DeleteProductCommand,
         if (productModel is null)
             return Result<ProductResponse>.Failure(StatusCodes.Status404NotFound, "Product not found.");
 
-        var storeMemberModel = await _unitOfWork
-            .GetRepository<StoreMemberModel>()
-            .FindAsync(
-                x => x.UserId == currentUserId
-                    && x.StoreId == productModel.StoreId
-                    && x.Status == StoreMemberStatus.Active
-                    && x.Store.Status != StoreStatus.Deleted
-                    && x.Store.Status != StoreStatus.Suspended,
-                true,
-                cancellationToken,
-                x => x.Store);
-
-        if (storeMemberModel is null)
+        var manageDecision = await _storePolicyService.ResolveManageProductAsync(currentUserId, productModel.StoreId, productModel.CreatedBy, cancellationToken);
+        if (manageDecision.Action == ManageStoreProductPolicyAction.StoreUnavailable)
             return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Current user does not belong to the product store.");
-
-        if (!Guid.TryParse(productModel.CreatedBy, out var creatorUserId))
+        if (manageDecision.Action == ManageStoreProductPolicyAction.CreatorInvalid)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Product creator is invalid.");
-
-        var canManageProduct = creatorUserId == currentUserId || storeMemberModel.Role == StoreMemberRole.Owner;
-        if (!canManageProduct)
+        if (manageDecision.Action == ManageStoreProductPolicyAction.Forbidden)
             return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Current user cannot delete this product.");
 
         var product = productModel.ToDomain();

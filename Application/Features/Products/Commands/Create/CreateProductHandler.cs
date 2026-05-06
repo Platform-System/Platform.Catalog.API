@@ -2,11 +2,13 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Abstractions;
+using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
 using Platform.Catalog.API.Application.Features.Products.Mappers;
 using Platform.Catalog.API.Application.Features.Products.Shared;
+using Platform.Catalog.API.Application.Features.Stores.Services;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
@@ -18,12 +20,14 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IBlobService _blobService;
+    private readonly IStorePolicyService _storePolicyService;
 
-    public CreateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService)
+    public CreateProductHandler(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider, IBlobService blobService, IStorePolicyService storePolicyService)
     {
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
         _blobService = blobService;
+        _storePolicyService = storePolicyService;
     }
 
     public async Task<Result<ProductResponse>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
@@ -38,28 +42,17 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
         if (categoryModel is null)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Category is invalid.");
 
-        var storeMemberModel = await _unitOfWork
-            .GetRepository<StoreMemberModel>()
-            .FindAsync(
-                x => x.UserId == currentUserId
-                    && x.Status == StoreMemberStatus.Active
-                    && x.Store.Status != StoreStatus.Deleted
-                    && x.Store.Status != StoreStatus.Suspended,
-                true,
-                cancellationToken,
-                x => x.Store);
-
-        if (storeMemberModel is null)
+        var storeDecision = await _storePolicyService.ResolveCreateProductAsync(currentUserId, cancellationToken);
+        if (storeDecision.Action == CreateProductStorePolicyAction.StoreUnavailable)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Current user does not belong to an available store.");
-
-        if (!storeMemberModel.Store.IsVerified && storeMemberModel.Role != StoreMemberRole.Owner)
+        if (storeDecision.Action == CreateProductStorePolicyAction.OwnerRequiredForUnverifiedStore)
             return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can create products before the store is verified.");
 
         var createResult = Product.Create(
             command.Request.Title,
             command.Request.Author,
             command.Request.Price,
-            storeMemberModel.StoreId,
+            storeDecision.StoreId,
             categoryModel.ToDomain(),
             command.Request.Stock);
 

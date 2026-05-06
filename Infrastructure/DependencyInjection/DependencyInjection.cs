@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Platform.Catalog.API.Application.Features.Products.Services;
+using Platform.Catalog.API.Application.Features.Stores.Services;
 using Platform.Catalog.API.Infrastructure.Data;
 using Platform.Infrastructure.DependencyInjection;
 using Platform.Infrastructure.Data;
@@ -26,6 +27,7 @@ public static class DependencyInjection
 
         services.AddScoped<BaseDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
         services.AddScoped<ProductApprovalService>();
+        services.AddScoped<IStorePolicyService, StorePolicyService>();
         services.AddSingleton<IConnectionMultiplexer>(_ =>
             ConnectionMultiplexer.Connect(redisConnectionString));
 
