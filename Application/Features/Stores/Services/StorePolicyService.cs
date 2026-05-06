@@ -1,4 +1,5 @@
 using Platform.Application.Abstractions.Data;
+using Platform.Catalog.API.Application.Abstractions.Stores;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 

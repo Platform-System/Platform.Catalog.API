@@ -1,5 +1,4 @@
 using FluentValidation;
-using Platform.Catalog.API.Application.Features.Products.Shared;
 
 namespace Platform.Catalog.API.Application.Features.Products.Commands.Create;
 

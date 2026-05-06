@@ -1,4 +1,4 @@
-namespace Platform.Catalog.API.Application.Features.Stores.Services;
+namespace Platform.Catalog.API.Application.Abstractions.Stores;
 
 public enum CreateProductStorePolicyAction
 {
