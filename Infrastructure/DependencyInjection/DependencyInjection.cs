@@ -8,7 +8,6 @@ using Platform.Infrastructure.DependencyInjection;
 using Platform.Infrastructure.Data;
 using Platform.Store.Grpc;
 using Platform.SystemContext.DependencyInjection;
-using StackExchange.Redis;
 
 namespace Platform.Catalog.API.Infrastructure.DependencyInjection;
 
@@ -17,11 +16,9 @@ public static class DependencyInjection
     public static IServiceCollection AddCatalogInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("CatalogDb");
-        var redisConnectionString = configuration.GetConnectionString("Redis")
-            ?? "localhost:6379,abortConnect=false";
 
-        services.AddSystemContext();
         services.AddInfrastructure(configuration);
+        services.AddSystemContext();
 
         services.AddDbContext<CatalogDbContext>(options =>
         {
@@ -30,6 +27,7 @@ public static class DependencyInjection
 
         services.AddScoped<BaseDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
         services.AddScoped<ProductApprovalService>();
+        
         services.Configure<StoreClientOptions>(configuration.GetSection("Integrations:Store"));
         services.AddGrpcClient<StoreIntegration.StoreIntegrationClient>((sp, options) =>
         {
@@ -41,8 +39,6 @@ public static class DependencyInjection
         });
         services.AddScoped<IStoreReadService, GrpcStoreReadService>();
         services.AddScoped<IStorePolicyService, GrpcStorePolicyService>();
-        services.AddSingleton<IConnectionMultiplexer>(_ =>
-            ConnectionMultiplexer.Connect(redisConnectionString));
 
         return services;
     }
