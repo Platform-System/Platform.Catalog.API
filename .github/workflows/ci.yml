@@ -18,11 +18,10 @@ permissions:
 
 jobs:
   build:
-    uses: Platform-System/Platform.CI-CD/.github/workflows/dotnet-build-template.yml@main
+    uses: Platform-System/Platform.CI-CD/.github/workflows/build-dotnet.yml@main
     secrets: inherit
     with:
       project_path: 'Platform.Catalog.sln'
       dependencies: 'Platform-System/Platform.Api,Platform-System/Platform.BuildingBlocks,Platform-System/Platform.Domain,Platform-System/Platform.Infrastructure,Platform-System/Platform.SystemContext,Platform-System/Platform.Application,Platform-System/Platform.SharedKernel,Platform-System/Platform.Contracts'
       push_image: true
       image_name: platform-catalog-api
-      dockerfile: Dockerfile

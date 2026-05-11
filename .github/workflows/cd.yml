@@ -14,7 +14,7 @@ permissions:
 jobs:
   call-deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
-    uses: Platform-System/Platform.CI-CD/.github/workflows/reusable-dotnet-deploy.yml@main
+    uses: Platform-System/Platform.CI-CD/.github/workflows/deploy-docker.yml@main
     with:
       service_name: platform-catalog-api
     secrets: inherit
