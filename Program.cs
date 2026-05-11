@@ -15,7 +15,7 @@ builder.Services.AddPlatformSwaggerJwt("Platform Catalog API");
 
 var app = builder.Build();
 
-app.ApplyMigrations<CatalogDbContext>();
+await app.ApplyMigrationsAsync<CatalogDbContext>();
 
 app.UseHttpsRedirection();
 app.UsePlatformSwagger();
