@@ -17,8 +17,4 @@ jobs:
     uses: Platform-System/Platform.CI-CD/.github/workflows/reusable-dotnet-deploy.yml@main
     with:
       service_name: platform-catalog-api
-    secrets:
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      SERVER_IP: ${{ secrets.SERVER_IP }}
-      SERVER_USER: ${{ secrets.SERVER_USER }}
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+    secrets: inherit
