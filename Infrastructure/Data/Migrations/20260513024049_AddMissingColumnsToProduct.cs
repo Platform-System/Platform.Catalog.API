@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Platform.Catalog.API.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddStoreIdToProduct : Migration
+    public partial class AddMissingColumnsToProduct : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,6 +17,20 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                 type: "uuid",
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+
+            migrationBuilder.AddColumn<string>(
+                name: "AltText",
+                table: "ProductMedias",
+                type: "character varying(500)",
+                maxLength: 500,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "AltText",
+                table: "ProductCoverImages",
+                type: "character varying(500)",
+                maxLength: 500,
+                nullable: true);
         }
 
         /// <inheritdoc />
@@ -25,6 +39,14 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "StoreId",
                 table: "Products");
+
+            migrationBuilder.DropColumn(
+                name: "AltText",
+                table: "ProductMedias");
+
+            migrationBuilder.DropColumn(
+                name: "AltText",
+                table: "ProductCoverImages");
         }
     }
 }

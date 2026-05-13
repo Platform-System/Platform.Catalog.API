@@ -13,8 +13,8 @@ using Platform.Catalog.API.Infrastructure.Data;
 namespace Platform.Catalog.API.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    [Migration("20260513015502_AddStoreIdToProduct")]
-    partial class AddStoreIdToProduct
+    [Migration("20260513024049_AddMissingColumnsToProduct")]
+    partial class AddMissingColumnsToProduct
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
