@@ -12,8 +12,14 @@
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.66.0" />
     <PackageReference Include="Grpc.Tools" Version="2.66.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.27" PrivateAssets="all" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\Platform.Contracts\Protos\Catalog\catalog_integration.proto"
+              GrpcServices="Server"
+              AdditionalImportDirs="..\Platform.Contracts\Protos" />
   </ItemGroup>
 
   <ItemGroup>
