@@ -8,12 +8,11 @@ namespace Platform.Catalog.API.Domain.Enums
 
     public enum ProductStatus
     {
-        Draft,
-        PendingOwnerReview,
-        PendingAdminReview,
-        Active,
-        Inactive,
-        Deleted
+        Draft = 0,
+        PendingOwnerReview = 1,
+        Active = 3,
+        Inactive = 4,
+        Deleted = 5
     }
 
     public enum CategoryStatus

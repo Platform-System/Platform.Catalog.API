@@ -4,7 +4,7 @@ public enum CreateProductStorePolicyAction
 {
     Allowed,
     StoreUnavailable,
-    OwnerRequiredForUnverifiedStore
+    StoreNotActive
 }
 
 public sealed class CreateProductStorePolicyDecision
@@ -30,11 +30,9 @@ public enum OwnerStoreApprovalPolicyAction
 {
     PublishActive,
     MovePendingOwnerReview,
-    MovePendingAdminReview,
-    UseAdminApproval,
+    StoreNotActive,
     ForbiddenStoreMembership,
     ForbiddenCreatorOnly,
-    ForbiddenOwnerOnlyUnverified,
     ForbiddenOwnerOnlyApprove,
     CreatorInvalid,
     NotReady

@@ -46,8 +46,8 @@ public sealed class CreateProductHandler : ICommandHandler<CreateProductCommand,
         var storeDecision = await _storePolicyService.ResolveCreateProductAsync(currentUserId, cancellationToken);
         if (storeDecision.Action == CreateProductStorePolicyAction.StoreUnavailable)
             return Result<ProductResponse>.Failure(StatusCodes.Status400BadRequest, "Current user does not belong to an available store.");
-        if (storeDecision.Action == CreateProductStorePolicyAction.OwnerRequiredForUnverifiedStore)
-            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can create products before the store is verified.");
+        if (storeDecision.Action == CreateProductStorePolicyAction.StoreNotActive)
+            return Result<ProductResponse>.Failure(StatusCodes.Status403Forbidden, "Store must be active before products can be created.");
 
         var createResult = Product.Create(
             command.Request.Title,

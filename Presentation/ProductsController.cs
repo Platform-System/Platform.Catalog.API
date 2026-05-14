@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
-using Platform.Catalog.API.Application.Features.Products.Commands.ApproveByAdmin;
 using Platform.Catalog.API.Application.Features.Products.Commands.ApproveByOwner;
 using Platform.Catalog.API.Application.Features.Products.Commands.Create;
 using Platform.Catalog.API.Application.Features.Products.Commands.Delete;
@@ -11,7 +10,6 @@ using Platform.Catalog.API.Application.Features.Products.Commands.Update;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetById;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetCurrentUserPendingProducts;
-using Platform.Catalog.API.Application.Features.Products.Queries.GetPendingAdminApprovalProducts;
 
 namespace Platform.Catalog.API.Presentation;
 
@@ -46,20 +44,6 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> GetById(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetProductByIdQuery(productId), cancellationToken);
-        return result.ToActionResult();
-    }
-
-    [HttpGet("pending")]
-    [Authorize]
-    public async Task<IActionResult> GetPendingAdminApprovalProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
-    {
-        var query = new GetPendingAdminApprovalProductsQuery
-        {
-            Page = request.Page,
-            PageSize = request.PageSize
-        };
-
-        var result = await _sender.Send(query, cancellationToken);
         return result.ToActionResult();
     }
 
@@ -110,11 +94,4 @@ public sealed class ProductsController : ControllerBase
         return result.ToActionResult();
     }
 
-    [HttpPost("{productId:guid}/approvals/admin")]
-    [Authorize]
-    public async Task<IActionResult> ApproveByAdmin(Guid productId, CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(new ApproveProductByAdminCommand(productId), cancellationToken);
-        return result.ToActionResult();
-    }
 }

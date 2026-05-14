@@ -67,23 +67,14 @@ public sealed class ApproveProductByOwnerHandler : ICommandHandler<ApproveProduc
                 productModel.ApplyDomainState(product);
                 _unitOfWork.GetRepository<ProductModel>().Update(productModel);
                 return Result<Unit>.Success(Unit.Value);
-            case OwnerStoreApprovalPolicyAction.MovePendingAdminReview:
-                var pendingAdminResult = product.MarkPendingAdminReview();
-                if (pendingAdminResult.IsFailure)
-                    return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Unable to submit product for admin review.");
-                productModel.ApplyDomainState(product);
-                _unitOfWork.GetRepository<ProductModel>().Update(productModel);
-                return Result<Unit>.Success(Unit.Value);
+            case OwnerStoreApprovalPolicyAction.StoreNotActive:
+                return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Store must be active before products can be submitted.");
             case OwnerStoreApprovalPolicyAction.ForbiddenStoreMembership:
                 return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Current user does not belong to this store.");
             case OwnerStoreApprovalPolicyAction.ForbiddenCreatorOnly:
                 return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Only the product creator can submit this product.");
-            case OwnerStoreApprovalPolicyAction.ForbiddenOwnerOnlyUnverified:
-                return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can submit products of unverified stores.");
             case OwnerStoreApprovalPolicyAction.ForbiddenOwnerOnlyApprove:
                 return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Only the store owner can approve this product.");
-            case OwnerStoreApprovalPolicyAction.UseAdminApproval:
-                return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Use the admin approval API for this product.");
             case OwnerStoreApprovalPolicyAction.CreatorInvalid:
                 return Result<Unit>.Failure(StatusCodes.Status400BadRequest, "Product creator is invalid.");
             default:

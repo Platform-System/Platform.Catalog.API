@@ -209,13 +209,6 @@ namespace Platform.Catalog.API.Domain.Entities
             return DomainResult.Success();
         }
 
-        public DomainResult MarkPendingAdminReview()
-        {
-            if (Status == ProductStatus.Deleted) return DomainResult.Failure(ProductErrors.AlreadyDeleted);
-            Status = ProductStatus.PendingAdminReview;
-            return DomainResult.Success();
-        }
-
         public void SetDraft() => Status = ProductStatus.Draft;
 
         public static Product Load(Guid id, string title, string author, long price, Guid storeId, ProductStatus status, DateTime? publishedAt, BlobMetadata? blobMetadata, int stock, DateTime createdAt, string? createdBy, DateTime? updatedAt, string? updatedBy, bool isSoftDeleted, DateTime? deletedAt, string? deletedBy)

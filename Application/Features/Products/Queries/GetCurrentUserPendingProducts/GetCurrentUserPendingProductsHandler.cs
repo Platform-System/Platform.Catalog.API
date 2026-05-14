@@ -39,8 +39,7 @@ public sealed class GetCurrentUserPendingProductsHandler : IQueryHandler<GetCurr
                 query.PageSize,
                 x => x.CreatedBy == userId
                     && (x.Status == ProductStatus.Draft
-                        || x.Status == ProductStatus.PendingOwnerReview
-                        || x.Status == ProductStatus.PendingAdminReview),
+                        || x.Status == ProductStatus.PendingOwnerReview),
                 x => x.CreatedAt,
                 true,
                 cancellationToken,

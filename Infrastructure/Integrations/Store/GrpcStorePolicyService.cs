@@ -120,7 +120,7 @@ file static class StorePolicyGrpcMappings
         {
             1 => CreateProductStorePolicyAction.Allowed,
             2 => CreateProductStorePolicyAction.StoreUnavailable,
-            3 => CreateProductStorePolicyAction.OwnerRequiredForUnverifiedStore,
+            3 => CreateProductStorePolicyAction.StoreNotActive,
             _ => CreateProductStorePolicyAction.StoreUnavailable
         };
     }
@@ -143,25 +143,25 @@ file static class StorePolicyGrpcMappings
         {
             1 => OwnerStoreApprovalPolicyAction.PublishActive,
             2 => OwnerStoreApprovalPolicyAction.MovePendingOwnerReview,
-            3 => OwnerStoreApprovalPolicyAction.MovePendingAdminReview,
-            4 => OwnerStoreApprovalPolicyAction.UseAdminApproval,
-            5 => OwnerStoreApprovalPolicyAction.ForbiddenStoreMembership,
-            6 => OwnerStoreApprovalPolicyAction.ForbiddenCreatorOnly,
-            7 => OwnerStoreApprovalPolicyAction.ForbiddenOwnerOnlyUnverified,
-            8 => OwnerStoreApprovalPolicyAction.ForbiddenOwnerOnlyApprove,
-            9 => OwnerStoreApprovalPolicyAction.CreatorInvalid,
-            10 => OwnerStoreApprovalPolicyAction.NotReady,
+            3 => OwnerStoreApprovalPolicyAction.StoreNotActive,
+            4 => OwnerStoreApprovalPolicyAction.ForbiddenStoreMembership,
+            5 => OwnerStoreApprovalPolicyAction.ForbiddenCreatorOnly,
+            6 => OwnerStoreApprovalPolicyAction.ForbiddenOwnerOnlyApprove,
+            7 => OwnerStoreApprovalPolicyAction.CreatorInvalid,
+            8 => OwnerStoreApprovalPolicyAction.NotReady,
             _ => OwnerStoreApprovalPolicyAction.ForbiddenStoreMembership
         };
     }
 
     public static ProductApprovalStatus ToGrpc(this ProductStatus status)
     {
+        if ((int)status == 2)
+            return (ProductApprovalStatus)3;
+
         return status switch
         {
             ProductStatus.Draft => (ProductApprovalStatus)1,
             ProductStatus.PendingOwnerReview => (ProductApprovalStatus)2,
-            ProductStatus.PendingAdminReview => (ProductApprovalStatus)3,
             ProductStatus.Active => (ProductApprovalStatus)4,
             ProductStatus.Inactive => (ProductApprovalStatus)5,
             ProductStatus.Deleted => (ProductApprovalStatus)6,

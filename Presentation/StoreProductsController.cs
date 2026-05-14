@@ -10,7 +10,6 @@ namespace Platform.Catalog.API.Presentation;
 
 [Route("api/stores")]
 [ApiController]
-[Authorize]
 public sealed class StoreProductsController : ControllerBase
 {
     private readonly ISender _sender;
@@ -20,7 +19,8 @@ public sealed class StoreProductsController : ControllerBase
         _sender = sender;
     }
 
-    [HttpGet("me/products/pending-owner-review")]
+    [HttpGet("/api/manage/stores/me/products/pending-owner-review")]
+    [Authorize]
     public async Task<IActionResult> GetPendingOwnerApprovalProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetPendingOwnerApprovalProductsQuery
@@ -34,6 +34,7 @@ public sealed class StoreProductsController : ControllerBase
     }
 
     [HttpGet("{slug}/products")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetProductsByStoreSlug(string slug, [FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetProductsByStoreSlugQuery(slug)
