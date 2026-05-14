@@ -10,7 +10,7 @@ using Platform.Catalog.API.Application.Features.Categories.Queries.GetAll;
 
 namespace Platform.Catalog.API.Presentation;
 
-[Route("api/[controller]")]
+[Route("api/categories")]
 [ApiController]
 public sealed class CategoriesController : ControllerBase
 {

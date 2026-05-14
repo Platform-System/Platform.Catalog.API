@@ -1,7 +1,7 @@
 using Platform.BuildingBlocks.DateTimes;
 using Platform.Catalog.API.Application.Features.ProductCoverImages.Mappers;
 using Platform.Catalog.API.Domain.Entities;
-using Platform.Catalog.API.Application.Features.Products.Shared;
+using Platform.Catalog.API.Application.Features.Products.Responses;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Application.Features.Products.Mappers;

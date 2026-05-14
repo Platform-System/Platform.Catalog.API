@@ -1,5 +1,5 @@
 using Platform.Application.Messaging;
-using Platform.Catalog.API.Application.Features.Categories.Shared;
+using Platform.Catalog.API.Application.Features.Categories.Responses;
 
 namespace Platform.Catalog.API.Application.Features.Categories.Commands.Update;
 

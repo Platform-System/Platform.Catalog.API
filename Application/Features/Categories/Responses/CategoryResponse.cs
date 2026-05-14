@@ -1,6 +1,6 @@
 using Platform.Catalog.API.Domain.Enums;
 
-namespace Platform.Catalog.API.Application.Features.Categories.Shared;
+namespace Platform.Catalog.API.Application.Features.Categories.Responses;
 
 public sealed class CategoryResponse
 {

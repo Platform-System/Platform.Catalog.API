@@ -20,7 +20,7 @@ public sealed class StoreProductsController : ControllerBase
         _sender = sender;
     }
 
-    [HttpGet("current/pending-owner-review")]
+    [HttpGet("me/products/pending-owner-review")]
     public async Task<IActionResult> GetPendingOwnerReview([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetPendingOwnerReviewQuery

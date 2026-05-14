@@ -1,6 +1,6 @@
-using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
+using Platform.Catalog.API.Application.Features.ProductCoverImages.Responses;
 
-namespace Platform.Catalog.API.Application.Features.Products.Shared;
+namespace Platform.Catalog.API.Application.Features.Products.Responses;
 
 public sealed class ProductResponse
 {

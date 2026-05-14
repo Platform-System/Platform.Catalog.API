@@ -3,7 +3,7 @@ using Platform.Application.Messaging;
 using Microsoft.AspNetCore.Http;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Categories.Mappers;
-using Platform.Catalog.API.Application.Features.Categories.Shared;
+using Platform.Catalog.API.Application.Features.Categories.Responses;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 

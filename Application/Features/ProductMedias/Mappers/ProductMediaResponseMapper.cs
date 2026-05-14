@@ -1,4 +1,4 @@
-using Platform.Catalog.API.Application.Features.ProductMedias.Shared;
+using Platform.Catalog.API.Application.Features.ProductMedias.Responses;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Application.Features.ProductMedias.Mappers;

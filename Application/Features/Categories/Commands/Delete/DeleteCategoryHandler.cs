@@ -4,7 +4,7 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Categories.Mappers;
-using Platform.Catalog.API.Application.Features.Categories.Shared;
+using Platform.Catalog.API.Application.Features.Categories.Responses;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
 namespace Platform.Catalog.API.Application.Features.Categories.Commands.Delete;

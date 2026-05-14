@@ -6,7 +6,7 @@ using Platform.Catalog.API.Application.Features.ProductMedias.Queries.GetAll;
 
 namespace Platform.Catalog.API.Presentation;
 
-[Route("api/[controller]")]
+[Route("api/product-medias")]
 [ApiController]
 public sealed class ProductMediasController : ControllerBase
 {

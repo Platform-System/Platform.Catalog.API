@@ -1,6 +1,6 @@
 using Platform.Catalog.API.Domain.Enums;
 
-namespace Platform.Catalog.API.Application.Features.ProductMedias.Shared;
+namespace Platform.Catalog.API.Application.Features.ProductMedias.Responses;
 
 public sealed class ProductMediaResponse
 {

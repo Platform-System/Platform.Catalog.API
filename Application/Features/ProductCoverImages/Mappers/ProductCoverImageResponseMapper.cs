@@ -1,4 +1,4 @@
-using Platform.Catalog.API.Application.Features.ProductCoverImages.Shared;
+using Platform.Catalog.API.Application.Features.ProductCoverImages.Responses;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 

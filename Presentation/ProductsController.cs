@@ -15,7 +15,7 @@ using Platform.Catalog.API.Application.Features.Products.Queries.PendingProductO
 
 namespace Platform.Catalog.API.Presentation;
 
-[Route("api/[controller]")]
+[Route("api/products")]
 [ApiController]
 public sealed class ProductsController : ControllerBase
 {
@@ -51,7 +51,7 @@ public sealed class ProductsController : ControllerBase
 
     [HttpGet("pending")]
     [Authorize]
-    public async Task<IActionResult> GetAllPendingProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPending([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetPendingProductQuery
         {
@@ -63,9 +63,9 @@ public sealed class ProductsController : ControllerBase
         return result.ToActionResult();
     }
 
-    [HttpGet("users/me/pending")]
+    [HttpGet("me/pending")]
     [Authorize]
-    public async Task<IActionResult> GetPendingProductsOfUser([FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPendingForCurrentUser([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetPendingProductOfUserQuery
         {
@@ -102,17 +102,17 @@ public sealed class ProductsController : ControllerBase
         return result.ToActionResult();
     }
 
-    [HttpPost("{productId:guid}/owner-store-approve")]
+    [HttpPost("{productId:guid}/approvals/owner")]
     [Authorize]
-    public async Task<IActionResult> OwnerStoreApprove(Guid productId, CancellationToken cancellationToken)
+    public async Task<IActionResult> ApproveByOwnerStore(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new OwnerStoreApproveProductCommand(productId), cancellationToken);
         return result.ToActionResult();
     }
 
-    [HttpPost("{productId:guid}/admin-approve")]
+    [HttpPost("{productId:guid}/approvals/admin")]
     [Authorize]
-    public async Task<IActionResult> AdminApprove(Guid productId, CancellationToken cancellationToken)
+    public async Task<IActionResult> ApproveByAdmin(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new AdminApproveProductCommand(productId), cancellationToken);
         return result.ToActionResult();
