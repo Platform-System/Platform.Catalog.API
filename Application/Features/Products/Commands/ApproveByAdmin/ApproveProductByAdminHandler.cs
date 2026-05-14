@@ -9,22 +9,22 @@ using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.SystemContext.Abstractions;
 
-namespace Platform.Catalog.API.Application.Features.Products.Commands.AdminApproveProduct;
+namespace Platform.Catalog.API.Application.Features.Products.Commands.ApproveByAdmin;
 
-public sealed class AdminApproveProductHandler : ICommandHandler<AdminApproveProductCommand>
+public sealed class ApproveProductByAdminHandler : ICommandHandler<ApproveProductByAdminCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ProductApprovalService _approvalService;
     private readonly IUserContext _userContext;
 
-    public AdminApproveProductHandler(IUnitOfWork unitOfWork, ProductApprovalService approvalService, IUserContext userContext)
+    public ApproveProductByAdminHandler(IUnitOfWork unitOfWork, ProductApprovalService approvalService, IUserContext userContext)
     {
         _unitOfWork = unitOfWork;
         _approvalService = approvalService;
         _userContext = userContext;
     }
 
-    public async Task<Result<Unit>> Handle(AdminApproveProductCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Unit>> Handle(ApproveProductByAdminCommand command, CancellationToken cancellationToken)
     {
         if (!_userContext.IsInRole("admin"))
             return Result<Unit>.Failure(StatusCodes.Status403Forbidden, "Admin role is required to approve this product.");

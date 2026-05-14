@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
-using Platform.Catalog.API.Application.Features.Products.Commands.AdminApproveProduct;
+using Platform.Catalog.API.Application.Features.Products.Commands.ApproveByAdmin;
+using Platform.Catalog.API.Application.Features.Products.Commands.ApproveByOwner;
 using Platform.Catalog.API.Application.Features.Products.Commands.Create;
 using Platform.Catalog.API.Application.Features.Products.Commands.Delete;
-using Platform.Catalog.API.Application.Features.Products.Commands.OwnerStoreApproveProduct;
 using Platform.Catalog.API.Application.Features.Products.Commands.Update;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetById;
-using Platform.Catalog.API.Application.Features.Products.Queries.PendingProduct;
-using Platform.Catalog.API.Application.Features.Products.Queries.PendingProductOfUser;
+using Platform.Catalog.API.Application.Features.Products.Queries.GetCurrentUserPendingProducts;
+using Platform.Catalog.API.Application.Features.Products.Queries.GetPendingAdminApprovalProducts;
 
 namespace Platform.Catalog.API.Presentation;
 
@@ -51,9 +51,9 @@ public sealed class ProductsController : ControllerBase
 
     [HttpGet("pending")]
     [Authorize]
-    public async Task<IActionResult> GetPending([FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPendingAdminApprovalProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
-        var query = new GetPendingProductQuery
+        var query = new GetPendingAdminApprovalProductsQuery
         {
             Page = request.Page,
             PageSize = request.PageSize
@@ -65,9 +65,9 @@ public sealed class ProductsController : ControllerBase
 
     [HttpGet("me/pending")]
     [Authorize]
-    public async Task<IActionResult> GetPendingForCurrentUser([FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCurrentUserPendingProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
-        var query = new GetPendingProductOfUserQuery
+        var query = new GetCurrentUserPendingProductsQuery
         {
             Page = request.Page,
             PageSize = request.PageSize
@@ -104,9 +104,9 @@ public sealed class ProductsController : ControllerBase
 
     [HttpPost("{productId:guid}/approvals/owner")]
     [Authorize]
-    public async Task<IActionResult> ApproveByOwnerStore(Guid productId, CancellationToken cancellationToken)
+    public async Task<IActionResult> ApproveByOwner(Guid productId, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new OwnerStoreApproveProductCommand(productId), cancellationToken);
+        var result = await _sender.Send(new ApproveProductByOwnerCommand(productId), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -114,7 +114,7 @@ public sealed class ProductsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ApproveByAdmin(Guid productId, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new AdminApproveProductCommand(productId), cancellationToken);
+        var result = await _sender.Send(new ApproveProductByAdminCommand(productId), cancellationToken);
         return result.ToActionResult();
     }
 }

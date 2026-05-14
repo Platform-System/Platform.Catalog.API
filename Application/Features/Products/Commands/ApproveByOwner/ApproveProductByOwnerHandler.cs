@@ -10,16 +10,16 @@ using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.SystemContext.Abstractions;
 
-namespace Platform.Catalog.API.Application.Features.Products.Commands.OwnerStoreApproveProduct;
+namespace Platform.Catalog.API.Application.Features.Products.Commands.ApproveByOwner;
 
-public sealed class OwnerStoreApproveProductHandler : ICommandHandler<OwnerStoreApproveProductCommand>
+public sealed class ApproveProductByOwnerHandler : ICommandHandler<ApproveProductByOwnerCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ProductApprovalService _approvalService;
     private readonly IStorePolicyService _storePolicyService;
     private readonly IUserContext _userContext;
 
-    public OwnerStoreApproveProductHandler(IUnitOfWork unitOfWork, ProductApprovalService approvalService, IStorePolicyService storePolicyService, IUserContext userContext)
+    public ApproveProductByOwnerHandler(IUnitOfWork unitOfWork, ProductApprovalService approvalService, IStorePolicyService storePolicyService, IUserContext userContext)
     {
         _unitOfWork = unitOfWork;
         _approvalService = approvalService;
@@ -27,7 +27,7 @@ public sealed class OwnerStoreApproveProductHandler : ICommandHandler<OwnerStore
         _userContext = userContext;
     }
 
-    public async Task<Result<Unit>> Handle(OwnerStoreApproveProductCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Unit>> Handle(ApproveProductByOwnerCommand command, CancellationToken cancellationToken)
     {
         if (_userContext.UserId is not Guid currentActorId)
             return Result<Unit>.Failure(StatusCodes.Status401Unauthorized, "Current user is invalid.");

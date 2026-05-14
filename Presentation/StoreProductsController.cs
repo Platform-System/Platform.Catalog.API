@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
-using Platform.Catalog.API.Application.Features.Products.Queries.GetPendingOwnerReview;
+using Platform.Catalog.API.Application.Features.Products.Queries.GetPendingOwnerApprovalProducts;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetProductsByStoreSlug;
 
 namespace Platform.Catalog.API.Presentation;
@@ -21,9 +21,9 @@ public sealed class StoreProductsController : ControllerBase
     }
 
     [HttpGet("me/products/pending-owner-review")]
-    public async Task<IActionResult> GetPendingOwnerReview([FromQuery] PagingRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPendingOwnerApprovalProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
-        var query = new GetPendingOwnerReviewQuery
+        var query = new GetPendingOwnerApprovalProductsQuery
         {
             Page = request.Page,
             PageSize = request.PageSize

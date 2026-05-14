@@ -8,20 +8,20 @@ using Platform.Catalog.API.Application.Features.Products.Responses;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 
-namespace Platform.Catalog.API.Application.Features.Products.Queries.PendingProduct;
+namespace Platform.Catalog.API.Application.Features.Products.Queries.GetPendingAdminApprovalProducts;
 
-public sealed class GetPendingProductHandler : IQueryHandler<GetPendingProductQuery, PagedResult<ProductResponse>>
+public sealed class GetPendingAdminApprovalProductsHandler : IQueryHandler<GetPendingAdminApprovalProductsQuery, PagedResult<ProductResponse>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBlobService _blobService;
 
-    public GetPendingProductHandler(IUnitOfWork unitOfWork, IBlobService blobService)
+    public GetPendingAdminApprovalProductsHandler(IUnitOfWork unitOfWork, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
         _blobService = blobService;
     }
 
-    public async Task<Result<PagedResult<ProductResponse>>> Handle(GetPendingProductQuery query, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<ProductResponse>>> Handle(GetPendingAdminApprovalProductsQuery query, CancellationToken cancellationToken)
     {
         var products = await _unitOfWork
             .GetRepository<ProductModel>()
