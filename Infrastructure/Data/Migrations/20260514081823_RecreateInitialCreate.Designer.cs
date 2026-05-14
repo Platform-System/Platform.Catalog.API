@@ -13,8 +13,8 @@ using Platform.Catalog.API.Infrastructure.Data;
 namespace Platform.Catalog.API.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    [Migration("20260513024904_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260514081823_RecreateInitialCreate")]
+    partial class RecreateInitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
