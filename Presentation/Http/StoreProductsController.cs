@@ -6,7 +6,7 @@ using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetPendingOwnerApprovalProducts;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetProductsByStoreSlug;
 
-namespace Platform.Catalog.API.Presentation;
+namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/stores")]
 [ApiController]

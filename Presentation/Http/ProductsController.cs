@@ -11,7 +11,7 @@ using Platform.Catalog.API.Application.Features.Products.Queries.GetAll;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetById;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetCurrentUserPendingProducts;
 
-namespace Platform.Catalog.API.Presentation;
+namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/products")]
 [ApiController]

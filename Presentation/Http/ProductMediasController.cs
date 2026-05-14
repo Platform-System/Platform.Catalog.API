@@ -4,7 +4,7 @@ using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.ProductMedias.Queries.GetAll;
 
-namespace Platform.Catalog.API.Presentation;
+namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/product-medias")]
 [ApiController]

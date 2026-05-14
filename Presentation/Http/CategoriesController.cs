@@ -8,7 +8,7 @@ using Platform.Catalog.API.Application.Features.Categories.Commands.Delete;
 using Platform.Catalog.API.Application.Features.Categories.Commands.Update;
 using Platform.Catalog.API.Application.Features.Categories.Queries.GetAll;
 
-namespace Platform.Catalog.API.Presentation;
+namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/categories")]
 [ApiController]
