@@ -110,6 +110,7 @@ internal sealed class FakeUserContext : IUserContext
 internal sealed class FakeBlobService : IBlobService
 {
     public int MakePublicCallCount { get; private set; }
+    public List<CancellationToken> MakePublicCancellationTokens { get; } = [];
 
     public Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, string containerName)
     {
@@ -131,9 +132,10 @@ internal sealed class FakeBlobService : IBlobService
         return blobNames.Select(blobName => GenerateReadSasUrl(container, blobName, expireMinutes)).ToList();
     }
 
-    public Task<string> MakePublicAndGetUrl(string container, string blobName)
+    public Task<string> MakePublicAndGetUrl(string container, string blobName, CancellationToken cancellationToken = default)
     {
         MakePublicCallCount++;
+        MakePublicCancellationTokens.Add(cancellationToken);
         return Task.FromResult($"https://blob.local/{container}/{blobName}");
     }
 }

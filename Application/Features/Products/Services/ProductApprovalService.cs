@@ -25,7 +25,7 @@ public sealed class ProductApprovalService
         if (blob is null)
             return Result<Unit>.Failure(StatusCodes.Status404NotFound, "Blob not found.");
 
-        var publicUrl = await _blobService.MakePublicAndGetUrl(blob.ContainerName, blob.BlobName);
+        var publicUrl = await _blobService.MakePublicAndGetUrl(blob.ContainerName, blob.BlobName, cancellationToken);
 
         var publishResult = product.PublishBlob(publicUrl);
         if (publishResult.IsFailure)
@@ -37,7 +37,7 @@ public sealed class ProductApprovalService
 
         if (product.CoverImage is not null)
         {
-            var coverImageUrl = await _blobService.MakePublicAndGetUrl(product.CoverImage.ContainerName, product.CoverImage.BlobName);
+            var coverImageUrl = await _blobService.MakePublicAndGetUrl(product.CoverImage.ContainerName, product.CoverImage.BlobName, cancellationToken);
             product.CoverImage.Publish(coverImageUrl);
         }
 

@@ -53,4 +53,27 @@ public sealed class ProductApprovalServiceTests
         Assert.Equal(1, repository.UpdateCallCount);
         Assert.Equal("https://blob.local/catalog-cover/cover.jpg", productModel.CoverImage?.Url);
     }
+
+    [Fact]
+    public async Task PublishActiveAsync_ForwardsCancellationTokenToBlobService()
+    {
+        var category = CatalogFixtures.CreateCategoryModel();
+        var productModel = CatalogFixtures.CreateProductModel(
+            category,
+            status: ProductStatus.PendingOwnerReview,
+            withBlob: true,
+            withCoverImage: true);
+        var product = productModel.ToDomain();
+        var repository = new FakeRepository<ProductModel>(productModel);
+        var unitOfWork = new FakeUnitOfWork();
+        unitOfWork.RegisterRepository(repository);
+        var blobService = new FakeBlobService();
+        var service = new ProductApprovalService(unitOfWork, blobService);
+        using var cancellationTokenSource = new CancellationTokenSource();
+
+        await service.PublishActiveAsync(productModel, product, cancellationTokenSource.Token);
+
+        Assert.Equal(2, blobService.MakePublicCancellationTokens.Count);
+        Assert.All(blobService.MakePublicCancellationTokens, token => Assert.Equal(cancellationTokenSource.Token, token));
+    }
 }
