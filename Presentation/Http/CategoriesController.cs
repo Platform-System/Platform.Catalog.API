@@ -12,6 +12,7 @@ namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/categories")]
 [ApiController]
+[Authorize]
 public sealed class CategoriesController : ControllerBase
 {
     private readonly ISender _sender;
@@ -21,7 +22,11 @@ public sealed class CategoriesController : ControllerBase
         _sender = sender;
     }
 
+    /// <summary>
+    /// Gets public categories with paging.
+    /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetAllCategoriesQuery
@@ -34,24 +39,30 @@ public sealed class CategoriesController : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Creates a new category.
+    /// </summary>
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new CreateCategoryCommand(request), cancellationToken);
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Updates an existing category.
+    /// </summary>
     [HttpPut("{categoryId:guid}")]
-    [Authorize]
     public async Task<IActionResult> Update(Guid categoryId, [FromBody] UpdateCategoryRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new UpdateCategoryCommand(categoryId, request), cancellationToken);
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Deletes a category.
+    /// </summary>
     [HttpDelete("{categoryId:guid}")]
-    [Authorize]
     public async Task<IActionResult> Delete(Guid categoryId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new DeleteCategoryCommand(categoryId), cancellationToken);

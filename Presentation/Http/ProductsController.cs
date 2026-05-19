@@ -15,6 +15,7 @@ namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/products")]
 [ApiController]
+[Authorize]
 public sealed class ProductsController : ControllerBase
 {
     private readonly ISender _sender;
@@ -24,7 +25,11 @@ public sealed class ProductsController : ControllerBase
         _sender = sender;
     }
 
+    /// <summary>
+    /// Gets public products with paging and filters.
+    /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(
         [FromQuery] GetAllProductsRequest productsRequest,
         [FromQuery] PagingRequest pageRequest,
@@ -40,15 +45,21 @@ public sealed class ProductsController : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Gets a public product by id.
+    /// </summary>
     [HttpGet("{productId:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetProductByIdQuery(productId), cancellationToken);
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Gets pending products for the current user.
+    /// </summary>
     [HttpGet("me/pending")]
-    [Authorize]
     public async Task<IActionResult> GetCurrentUserPendingProducts([FromQuery] PagingRequest request, CancellationToken cancellationToken)
     {
         var query = new GetCurrentUserPendingProductsQuery
@@ -61,16 +72,20 @@ public sealed class ProductsController : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Creates a new product.
+    /// </summary>
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateProductRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new CreateProductCommand(request), cancellationToken);
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Updates an existing product.
+    /// </summary>
     [HttpPut("{productId:guid}")]
-    [Authorize]
     public async Task<IActionResult> Update(Guid productId, [FromBody] UpdateProductRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new UpdateProductCommand(productId, request), cancellationToken);
@@ -78,16 +93,20 @@ public sealed class ProductsController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Deletes a product.
+    /// </summary>
     [HttpDelete("{productId:guid}")]
-    [Authorize]
     public async Task<IActionResult> Delete(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new DeleteProductCommand(productId), cancellationToken);
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Approves a product as store owner.
+    /// </summary>
     [HttpPost("{productId:guid}/approvals/owner")]
-    [Authorize]
     public async Task<IActionResult> ApproveByOwner(Guid productId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new ApproveProductByOwnerCommand(productId), cancellationToken);
