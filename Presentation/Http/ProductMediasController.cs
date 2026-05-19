@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.BuildingBlocks.Requests;
 using Platform.BuildingBlocks.Responses;
@@ -8,6 +9,7 @@ namespace Platform.Catalog.API.Presentation.Http;
 
 [Route("api/product-medias")]
 [ApiController]
+[Authorize]
 public sealed class ProductMediasController : ControllerBase
 {
     private readonly ISender _sender;
@@ -17,7 +19,11 @@ public sealed class ProductMediasController : ControllerBase
         _sender = sender;
     }
 
+    /// <summary>
+    /// Gets public product medias with paging.
+    /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(
         [FromQuery] GetAllProductMediasRequest request,
         [FromQuery] PagingRequest pageRequest,
