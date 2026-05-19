@@ -10,6 +10,7 @@ builder.Services.AddApplication(typeof(Program).Assembly);
 builder.Services.AddCatalogInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddGrpc();
+builder.Services.AddPlatformRuntime();
 builder.Services.AddPlatformAuthentication(builder.Configuration);
 builder.Services.AddPlatformSwaggerJwt("Platform Catalog API");
 
@@ -17,6 +18,7 @@ var app = builder.Build();
 
 await app.ApplyMigrationsAsync<CatalogDbContext>();
 
+app.UsePlatformRuntime();
 app.UseHttpsRedirection();
 app.UsePlatformSwagger();
 app.UsePlatformAuthentication();
