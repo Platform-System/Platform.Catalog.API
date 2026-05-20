@@ -28,14 +28,14 @@ public static class DependencyInjection
         services.AddScoped<BaseDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
         services.AddScoped<ProductApprovalService>();
         
-        services.Configure<StoreClientOptions>(configuration.GetSection("Integrations:Store"));
+        services.AddOptions<StoreClientOptions>()
+            .Bind(configuration.GetSection("Integrations:Store"))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Address), "Integrations:Store:Address is required.")
+            .ValidateOnStart();
         services.AddGrpcClient<StoreIntegration.StoreIntegrationClient>((sp, options) =>
         {
             var storeOptions = sp.GetRequiredService<IOptions<StoreClientOptions>>().Value;
-            options.Address = new Uri(
-                string.IsNullOrWhiteSpace(storeOptions.Address)
-                    ? "http://localhost"
-                    : storeOptions.Address);
+            options.Address = new Uri(storeOptions.Address);
         });
         services.AddScoped<IStoreReadService, GrpcStoreReadService>();
         services.AddScoped<IStorePolicyService, GrpcStorePolicyService>();
