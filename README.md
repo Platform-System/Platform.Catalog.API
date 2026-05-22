@@ -34,5 +34,6 @@ Theo doi nhanh endpoint nao da duoc frontend su dung qua gateway.
 
 ## Notes
 
+- Product management flow hien duoc xem la phan he cua chu shop / merchant, khong thuoc `AdminUI`.
 - `Platform.MerchantUI/src/shared/lib/category-queries.ts` van con fallback mock khi API loi, nhung endpoint category da duoc goi that.
 - Co the mo rong README nay them cot `AdminUI`, `MerchantUI`, `PortalUI` neu ban muon tach theo consumer.
