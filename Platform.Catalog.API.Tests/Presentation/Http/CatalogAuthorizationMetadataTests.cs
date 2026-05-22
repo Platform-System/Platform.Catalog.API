@@ -13,6 +13,9 @@ public sealed class CatalogAuthorizationMetadataTests
         AssertHasAuthorizeOnClass(typeof(CategoriesController));
         AssertHasAuthorizeOnClass(typeof(ProductMediasController));
         AssertHasAuthorizeOnClass(typeof(StoreProductsController));
+        AssertHasAuthorizeOnClass(typeof(ManageProductsController));
+        AssertHasAuthorizeOnClass(typeof(ManageCategoriesController));
+        AssertHasAuthorizeOnClass(typeof(ManageStoreProductsController));
     }
 
     [Fact]
