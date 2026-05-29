@@ -6,7 +6,7 @@
 - [x] `GET /api/catalog/products/{productId}` - `Platform.MerchantUI/src/features/product/queries/product-queries.ts`
 - [x] `GET /api/catalog/categories` - `Platform.MerchantUI/src/shared/lib/category-queries.ts`
 - [x] `GET /api/catalog/stores/{slug}/products` - `Platform.MerchantUI/src/features/seller/queries/seller-queries.ts`
-- [ ] `GET /api/catalog/product-medias`
+- [x] `GET /api/catalog/product-medias` - `Platform.MerchantUI/src/features/product/queries/product-queries.ts`
 
 ## Authenticated
 
@@ -19,6 +19,6 @@
 
 ## Admin
 
-- [ ] `POST /api/catalog/manage/categories`
-- [ ] `PUT /api/catalog/manage/categories/{id}`
-- [ ] `DELETE /api/catalog/manage/categories/{id}`
+- [x] `POST /api/catalog/manage/categories` - `Platform.AdminUI/src/features/categories/categoriesService.ts`
+- [x] `PUT /api/catalog/manage/categories/{id}` - `Platform.AdminUI/src/features/categories/categoriesService.ts`
+- [x] `DELETE /api/catalog/manage/categories/{id}` - `Platform.AdminUI/src/features/categories/categoriesService.ts`
