@@ -42,6 +42,9 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
         AdjustStockRequest request,
         ServerCallContext context)
     {
+        if (await HasProcessedOperationAsync(request.OperationId, context.CancellationToken))
+            return CatalogIntegrationResponses.SuccessAdjustStock();
+
         // Catalog là nơi giữ stock thật, nên checkout bên Ordering sẽ gọi
         // sang endpoint này để trừ kho thay vì tự cập nhật dữ liệu Catalog.
         foreach (var item in request.Items)
@@ -70,6 +73,7 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             productModel.ApplyDomainState(product);
         }
 
+        await RememberProcessedOperationAsync(request.OperationId, "decrease", context.CancellationToken);
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
 
         return CatalogIntegrationResponses.SuccessAdjustStock();
@@ -77,6 +81,9 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
 
     public override async Task<AdjustStockResponse> RestoreStock(AdjustStockRequest request, ServerCallContext context)
     {
+        if (await HasProcessedOperationAsync(request.OperationId, context.CancellationToken))
+            return CatalogIntegrationResponses.SuccessAdjustStock();
+
         // Catalog tự xử lý trả kho khi Ordering cần hoàn tác stock cho các physical product.
         foreach (var item in request.Items)
         {
@@ -100,9 +107,38 @@ public sealed class CatalogIntegrationService : CatalogIntegration.CatalogIntegr
             productModel.ApplyDomainState(product);
         }
 
+        await RememberProcessedOperationAsync(request.OperationId, "restore", context.CancellationToken);
         await _unitOfWork.SaveChangesAsync(context.CancellationToken);
 
         return CatalogIntegrationResponses.SuccessAdjustStock();
+    }
+
+    private async Task<bool> HasProcessedOperationAsync(string operationId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(operationId))
+            return false;
+
+        return await _unitOfWork.GetRepository<StockAdjustmentOperationModel>().FindAsync(
+            x => x.OperationId == operationId,
+            true,
+            cancellationToken) is not null;
+    }
+
+    private async Task RememberProcessedOperationAsync(
+        string operationId,
+        string adjustmentType,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(operationId))
+            return;
+
+        await _unitOfWork.GetRepository<StockAdjustmentOperationModel>().AddAsync(
+            new StockAdjustmentOperationModel
+            {
+                OperationId = operationId,
+                AdjustmentType = adjustmentType
+            },
+            cancellationToken);
     }
 
     public override async Task<AuthorizeProductCoverUploadResponse> AuthorizeProductCoverUpload(

@@ -16,6 +16,7 @@ namespace Platform.Catalog.API.Infrastructure.Data
         public DbSet<CategoryModel> Categories { get; set; }
         public DbSet<ProductMediaModel> ProductMedias { get; set; }
         public DbSet<ProductCoverImageModel> ProductCoverImages { get; set; }
+        public DbSet<StockAdjustmentOperationModel> StockAdjustmentOperations { get; set; }
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
             configurationBuilder.Properties<Enum>()
@@ -27,6 +28,9 @@ namespace Platform.Catalog.API.Infrastructure.Data
 
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+            modelBuilder.Entity<StockAdjustmentOperationModel>()
+                .HasIndex(x => x.OperationId)
+                .IsUnique();
         }
     }
 }
