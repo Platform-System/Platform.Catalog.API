@@ -13,8 +13,8 @@ using Platform.Catalog.API.Infrastructure.Data;
 namespace Platform.Catalog.API.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    [Migration("20260514081823_RecreateInitialCreate")]
-    partial class RecreateInitialCreate
+    [Migration("20260616082521_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -274,6 +274,49 @@ namespace Platform.Catalog.API.Infrastructure.Data.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Platform.Catalog.API.Infrastructure.Persistence.Models.StockAdjustmentOperationModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdjustmentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsSoftDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OperationId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperationId")
+                        .IsUnique();
+
+                    b.ToTable("StockAdjustmentOperations");
                 });
 
             modelBuilder.Entity("Platform.Catalog.API.Infrastructure.Persistence.Models.ProductCoverImageModel", b =>
