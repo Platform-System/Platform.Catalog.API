@@ -6,7 +6,10 @@ using Platform.BuildingBlocks.Responses;
 using Platform.Catalog.API.Application.Features.Products.Commands.ApproveByOwner;
 using Platform.Catalog.API.Application.Features.Products.Commands.Create;
 using Platform.Catalog.API.Application.Features.Products.Commands.Delete;
+using Platform.Catalog.API.Application.Features.Products.Commands.SetCover;
+using Platform.Catalog.API.Application.Features.Products.Commands.SetMedias;
 using Platform.Catalog.API.Application.Features.Products.Commands.Update;
+using Platform.Catalog.API.Application.Features.Products.Queries.AuthorizeUpload;
 using Platform.Catalog.API.Application.Features.Products.Queries.GetCurrentUserPendingProducts;
 
 namespace Platform.Catalog.API.Presentation.Http;
@@ -76,6 +79,46 @@ public sealed class ManageProductsController : ControllerBase
     public async Task<IActionResult> ApproveByOwner(Guid id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new ApproveProductByOwnerCommand(id), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Authorizes product asset upload.
+    /// </summary>
+    [HttpGet("{id:guid}/upload-authorization")]
+    public async Task<IActionResult> AuthorizeProductUpload(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new AuthorizeProductUploadQuery(id), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Sets product cover metadata.
+    /// </summary>
+    [HttpPut("{id:guid}/cover")]
+    public async Task<IActionResult> SetProductCover(
+        Guid id,
+        [FromBody] SetProductCoverRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new SetProductCoverCommand(id, request);
+        var result = await _sender.Send(command, cancellationToken);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Sets product media metadata.
+    /// </summary>
+    [HttpPut("{id:guid}/medias")]
+    public async Task<IActionResult> SetProductMedias(
+        Guid id,
+        [FromBody] SetProductMediasRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new SetProductMediasCommand(id, request);
+        var result = await _sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 }
