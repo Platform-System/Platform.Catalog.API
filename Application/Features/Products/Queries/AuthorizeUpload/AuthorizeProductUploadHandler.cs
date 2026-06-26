@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using Platform.BuildingBlocks.Responses;
+using Platform.Catalog.API.Application.Features.Products.Responses;
 using Platform.Catalog.API.Domain.Enums;
 using Platform.Catalog.API.Infrastructure.Persistence.Models;
 using Platform.SystemContext.Abstractions;
@@ -43,6 +44,6 @@ public sealed class AuthorizeProductUploadHandler : IQueryHandler<AuthorizeProdu
         var isAdmin = _userContext.IsInRole("admin");
         var visibility = isAdmin ? "Public" : "Private";
 
-        return Result<ProductUploadAuthorizationResponse>.Success(new ProductUploadAuthorizationResponse(visibility));
+        return Result<ProductUploadAuthorizationResponse>.Success(new ProductUploadAuthorizationResponse { Visibility = visibility });
     }
 }
