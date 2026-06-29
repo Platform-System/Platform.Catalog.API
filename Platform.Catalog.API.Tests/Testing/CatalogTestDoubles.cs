@@ -88,7 +88,6 @@ internal sealed class FakeRepository<T> : IGenericRepository<T> where T : Entity
     public void Remove(T entity) => throw new NotSupportedException();
     public Task<int> DeleteRangeAsync(Expression<Func<T, bool>> predicate) => throw new NotSupportedException();
     public Task<int> DeleteInBatchesAsync(Expression<Func<T, bool>> predicate, Expression<Func<T, DateTime>> orderBy, Expression<Func<T, Guid>> keySelector, int batchSize = 100) => throw new NotSupportedException();
-    public IQueryable<T> GetQueryable() => _entities.AsQueryable();
     public Task<int> TotalAsync(Expression<Func<T, bool>> predicate) => throw new NotSupportedException();
 }
 
