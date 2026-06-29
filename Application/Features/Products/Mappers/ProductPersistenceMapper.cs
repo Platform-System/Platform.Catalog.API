@@ -1,4 +1,4 @@
-using Platform.BuildingBlocks.Extensions;
+using Platform.BuildingBlocks.Json;
 using Platform.Catalog.API.Application.Features.Categories.Mappers;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.ValueObjects;

@@ -1,4 +1,4 @@
-using Platform.BuildingBlocks.Extensions;
+using Platform.BuildingBlocks.Json;
 using System.Text.Json;
 
 namespace Platform.Catalog.API.Domain.Extensions

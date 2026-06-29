@@ -5,7 +5,7 @@ using Platform.Application.Abstractions.Data;
 using Platform.Application.Abstractions.Storage;
 using Platform.BuildingBlocks.Abstractions;
 using Platform.BuildingBlocks.Responses;
-using Platform.BuildingBlocks.Extensions;
+using Platform.BuildingBlocks.Json;
 using Platform.Catalog.API.Application.Abstractions.Stores;
 using Platform.Catalog.API.Domain.Entities;
 using Platform.Catalog.API.Domain.Enums;
