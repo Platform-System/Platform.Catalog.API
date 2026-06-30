@@ -1,4 +1,5 @@
 using Grpc.Core;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Platform.Catalog.API.Application.Abstractions.Stores;
 using Platform.Common.Grpc;
@@ -10,11 +11,16 @@ public sealed class GrpcStoreReadService : IStoreReadService
 {
     private readonly StoreIntegration.StoreIntegrationClient _client;
     private readonly StoreClientOptions _options;
+    private readonly ILogger<GrpcStoreReadService> _logger;
 
-    public GrpcStoreReadService(StoreIntegration.StoreIntegrationClient client, IOptions<StoreClientOptions> options)
+    public GrpcStoreReadService(
+        StoreIntegration.StoreIntegrationClient client,
+        IOptions<StoreClientOptions> options,
+        ILogger<GrpcStoreReadService> _logger)
     {
         _client = client;
         _options = options.Value;
+        this._logger = _logger;
     }
 
     public async Task<Guid?> GetCurrentOwnerStoreIdAsync(Guid userId, CancellationToken cancellationToken)
@@ -36,8 +42,9 @@ public sealed class GrpcStoreReadService : IStoreReadService
 
             return Guid.TryParse(response.Data.StoreId, out var storeId) ? storeId : null;
         }
-        catch (RpcException)
+        catch (RpcException ex)
         {
+            _logger.LogError(ex, "gRPC GetCurrentOwnerStoreAsync failed. StatusCode={StatusCode}, Message={Message}", ex.StatusCode, ex.Message);
             return null;
         }
     }
@@ -61,8 +68,9 @@ public sealed class GrpcStoreReadService : IStoreReadService
 
             return Guid.TryParse(response.Data.StoreId, out var storeId) ? storeId : null;
         }
-        catch (RpcException)
+        catch (RpcException ex)
         {
+            _logger.LogError(ex, "gRPC GetStoreBySlugAsync failed. StatusCode={StatusCode}, Message={Message}", ex.StatusCode, ex.Message);
             return null;
         }
     }
